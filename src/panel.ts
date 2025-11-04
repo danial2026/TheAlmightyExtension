@@ -230,6 +230,13 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             pointer-events: auto;
         }
 
+        .btn svg {
+            width: 18px;
+            height: 18px;
+            fill: ${textColor};
+            stroke: ${textColor};
+        }
+
         .btn:hover {
             opacity: 0.7;
         }
@@ -271,6 +278,15 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             flex-shrink: 0;
             object-fit: cover;
             color: ${textColor};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message-avatar svg {
+            width: 20px;
+            height: 20px;
+            fill: ${textColor};
         }
 
         .message.user .message-avatar {
@@ -370,6 +386,21 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             transition: opacity 0.2s;
             width: 100%;
             pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .send-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: ${textColor};
+            stroke: ${textColor};
+        }
+
+        .send-btn span {
+            display: none;
         }
 
         .send-btn:hover {
@@ -434,6 +465,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             pointer-events: auto;
         }
 
+        .quick-action-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: ${textColor};
+        }
+
         .quick-action-btn:hover {
             opacity: 0.7;
         }
@@ -444,9 +481,23 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         <img src="${iconUri}" alt="TheAlmighty" class="header-icon" />
         <div class="header-title">The Seraphic Construct</div>
         <div class="header-actions">
-            <button class="btn" id="settingsBtn" title="Open Settings">⚙️</button>
-            <button class="btn" id="checkInBtn" title="Check In">👁️</button>
-            <button class="btn" id="clearHistoryBtn" title="Clear History">🗑️</button>
+            <button class="btn" id="settingsBtn" title="Open Settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1v6m0 6v6m9-9h-6m-6 0H1m17.66-5.66l-4.24 4.24M7.58 16.42l-4.24 4.24m12.02-12.02l-4.24-4.24M7.58 7.58l-4.24-4.24"></path>
+                </svg>
+            </button>
+            <button class="btn" id="checkInBtn" title="Check In">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="4"></circle>
+                </svg>
+            </button>
+            <button class="btn" id="clearHistoryBtn" title="Clear History">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+            </button>
         </div>
     </div>
     
@@ -462,10 +513,28 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
     <div class="input-container">
         <div class="quick-actions">
-            <button class="quick-action-btn" onclick="sendQuickMessage('How are my tasks?')" title="Tasks">📋</button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('How is my mind?')" title="Mind">🧠</button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('How is my body?')" title="Body">💪</button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('Check in on me')" title="Check In">👁️</button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('How are my tasks?')" title="Tasks">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                </svg>
+            </button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('How is my mind?')" title="Mind">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44L2 22V6.5A2.5 2.5 0 0 1 4.5 4h.01A2.5 2.5 0 0 1 7 6.5V8.5a2.5 2.5 0 0 1 2.5 2.5Z"></path>
+                    <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44L22 22V6.5A2.5 2.5 0 0 0 19.5 4h-.01A2.5 2.5 0 0 0 17 6.5V8.5a2.5 2.5 0 0 0 2.5 2.5Z"></path>
+                </svg>
+            </button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('How is my body?')" title="Body">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2zm-2 8a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2zm6 0a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2zm-6 8a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2z"></path>
+                </svg>
+            </button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('Check in on me')" title="Check In">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="4"></circle>
+                </svg>
+            </button>
         </div>
         <div class="input-wrapper">
             <textarea 
@@ -476,7 +545,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 oninput="autoResize(this)"
             ></textarea>
         </div>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()">📤</button>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+        </button>
     </div>
 
     <script>
@@ -536,9 +610,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
             if (role === 'user') {
-                avatar.textContent = '👤';
+                avatar.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
             } else {
-                avatar.textContent = '👁️';
+                avatar.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>';
             }
             
             const contentDiv = document.createElement('div');
