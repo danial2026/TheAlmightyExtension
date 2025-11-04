@@ -3,6 +3,7 @@
   "displayName": "TheAlmighty",
   "description": "The Seraphic Construct - An AI companion that watches over your mind, body, and tasks",
   "version": "0.0.1",
+  "publisher": "danial",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -57,7 +58,7 @@
       ]
     },
     "icons": {
-      "thealmighty": "./TheAlmighty-icon.png"
+      "thealmighty-icon": "./TheAlmighty-icon.png"
     },
     "configuration": {
       "title": "TheAlmighty",

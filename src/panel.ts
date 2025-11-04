@@ -2,38 +2,33 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { TheAlmightyAgent } from './agent';
 
-export class TheAlmightyPanel {
-    public static currentPanel: TheAlmightyPanel | undefined;
+class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'thealmighty';
 
-    private readonly _view: vscode.WebviewView;
-    private readonly _extensionUri: vscode.Uri;
-    private _disposables: vscode.Disposable[] = [];
+    private _view?: vscode.WebviewView;
 
-    public static register(context: vscode.ExtensionContext): vscode.Disposable {
-        const provider = new TheAlmightyPanelProvider(context.extensionUri);
-        return vscode.window.registerWebviewViewProvider(TheAlmightyPanel.viewType, provider);
-    }
+    constructor(
+        private readonly _extensionUri: vscode.Uri,
+    ) { }
 
-    public static createOrShow(extensionUri: vscode.Uri) {
-        // The view will be automatically shown when the view container is clicked
-        // This command is kept for compatibility but the view is managed by VS Code
-        vscode.commands.executeCommand('thealmighty-container.focus');
-    }
+    public resolveWebviewView(
+        webviewView: vscode.WebviewView,
+        context: vscode.WebviewViewResolveContext,
+        _token: vscode.CancellationToken,
+    ) {
+        this._view = webviewView;
 
-    private constructor(view: vscode.WebviewView, extensionUri: vscode.Uri) {
-        this._view = view;
-        this._extensionUri = extensionUri;
+        webviewView.webview.options = {
+            enableScripts: true,
+            localResourceRoots: [
+                vscode.Uri.joinPath(this._extensionUri),
+            ]
+        };
 
-        // Set the webview's initial html content
-        this._update();
-
-        // Listen for when the panel is disposed
-        // This happens when the user closes the panel or when the panel is closed programmatically
-        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+        webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
         // Handle messages from the webview
-        this._panel.webview.onDidReceiveMessage(
+        webviewView.webview.onDidReceiveMessage(
             async (message) => {
                 switch (message.command) {
                     case 'ready':
@@ -50,19 +45,17 @@ export class TheAlmightyPanel {
                         this._handleClearHistory();
                         break;
                 }
-            },
-            null,
-            this._disposables
+            }
         );
     }
 
     private async _handleMessage(userMessage: string) {
-        if (!userMessage.trim()) {
+        if (!userMessage.trim() || !this._view) {
             return;
         }
 
         // Add user message to UI
-        this._panel.webview.postMessage({
+        this._view.webview.postMessage({
             command: 'addMessage',
             role: 'user',
             content: userMessage,
@@ -74,7 +67,7 @@ export class TheAlmightyPanel {
         const response = await agent.processMessage(userMessage);
 
         // Add response to UI
-        this._panel.webview.postMessage({
+        this._view.webview.postMessage({
             command: 'addMessage',
             role: 'assistant',
             content: response,
@@ -83,10 +76,14 @@ export class TheAlmightyPanel {
     }
 
     private async _handleCheckIn() {
+        if (!this._view) {
+            return;
+        }
+
         const agent = TheAlmightyAgent.getInstance();
         const response = await agent.generateCheckIn();
         
-        this._panel.webview.postMessage({
+        this._view.webview.postMessage({
             command: 'addMessage',
             role: 'assistant',
             content: response,
@@ -95,36 +92,35 @@ export class TheAlmightyPanel {
     }
 
     private _handleClearHistory() {
+        if (!this._view) {
+            return;
+        }
+
         const agent = TheAlmightyAgent.getInstance();
         agent.clearConversationHistory();
         
-        this._panel.webview.postMessage({
+        this._view.webview.postMessage({
             command: 'clearMessages'
         });
     }
 
-    private _getTimeOfDay(): string {
-        const hour = new Date().getHours();
-        if (hour < 6) return 'deep night';
-        if (hour < 12) return 'morning';
-        if (hour < 18) return 'afternoon';
-        if (hour < 22) return 'evening';
-        return 'night';
-    }
-
     private _loadConversationHistory() {
+        if (!this._view) {
+            return;
+        }
+
         const agent = TheAlmightyAgent.getInstance();
         const history = agent.getConversationHistory();
         
         if (history.length > 0) {
             // Remove welcome message
-            this._panel.webview.postMessage({
+            this._view.webview.postMessage({
                 command: 'clearMessages'
             });
             
             // Load each message
             history.forEach(msg => {
-                this._panel.webview.postMessage({
+                this._view!.webview.postMessage({
                     command: 'addMessage',
                     role: msg.role,
                     content: msg.content,
@@ -132,25 +128,6 @@ export class TheAlmightyPanel {
                 });
             });
         }
-    }
-
-    public dispose() {
-        TheAlmightyPanel.currentPanel = undefined;
-
-        // Clean up our resources
-        this._panel.dispose();
-
-        while (this._disposables.length) {
-            const x = this._disposables.pop();
-            if (x) {
-                x.dispose();
-            }
-        }
-    }
-
-    private _update() {
-        const webview = this._panel.webview;
-        this._panel.webview.html = this._getHtmlForWebview(webview);
     }
 
     private _getHtmlForWebview(webview: vscode.Webview) {
@@ -187,22 +164,23 @@ export class TheAlmightyPanel {
 
         .header {
             background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-            padding: 15px 20px;
+            padding: 12px 15px;
             border-bottom: 1px solid #3e3e3e;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
         }
 
         .header-icon {
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
             border-radius: 4px;
         }
 
         .header-title {
-            font-size: 18px;
+            font-size: 14px;
             font-weight: 600;
             color: #fff;
             flex: 1;
@@ -210,17 +188,17 @@ export class TheAlmightyPanel {
 
         .header-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .btn {
-            padding: 6px 12px;
+            padding: 4px 8px;
             background: #3e3e3e;
             border: 1px solid #555;
             border-radius: 4px;
             color: #d4d4d4;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 11px;
             transition: all 0.2s;
         }
 
@@ -232,15 +210,15 @@ export class TheAlmightyPanel {
         .chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
         }
 
         .message {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             animation: fadeIn 0.3s ease-in;
         }
 
@@ -260,8 +238,8 @@ export class TheAlmightyPanel {
         }
 
         .message-avatar {
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             flex-shrink: 0;
             object-fit: cover;
@@ -274,23 +252,28 @@ export class TheAlmightyPanel {
             justify-content: center;
             font-weight: bold;
             color: white;
+            font-size: 12px;
         }
 
         .message.assistant .message-avatar {
             background: #2d2d2d;
             border: 2px solid #4e4e4e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .message-content {
             flex: 1;
-            max-width: 80%;
+            max-width: 85%;
             background: #252526;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             border: 1px solid #3e3e3e;
-            line-height: 1.6;
+            line-height: 1.5;
             white-space: pre-wrap;
             word-wrap: break-word;
+            font-size: 13px;
         }
 
         .message.user .message-content {
@@ -307,11 +290,13 @@ export class TheAlmightyPanel {
         }
 
         .input-container {
-            padding: 15px 20px;
+            padding: 12px 15px;
             background: #1e1e1e;
             border-top: 1px solid #3e3e3e;
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
         }
 
         .input-wrapper {
@@ -321,12 +306,12 @@ export class TheAlmightyPanel {
 
         #messageInput {
             width: 100%;
-            padding: 12px 15px;
+            padding: 10px 12px;
             background: #252526;
             border: 1px solid #3e3e3e;
             border-radius: 6px;
             color: #d4d4d4;
-            font-size: 14px;
+            font-size: 13px;
             font-family: inherit;
             resize: none;
             outline: none;
@@ -342,15 +327,16 @@ export class TheAlmightyPanel {
         }
 
         .send-btn {
-            padding: 12px 24px;
+            padding: 10px 20px;
             background: #007acc;
             border: none;
             border-radius: 6px;
             color: white;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             transition: background 0.2s;
+            width: 100%;
         }
 
         .send-btn:hover {
@@ -365,26 +351,27 @@ export class TheAlmightyPanel {
 
         .welcome-message {
             text-align: center;
-            padding: 40px 20px;
+            padding: 30px 15px;
             color: #858585;
         }
 
         .welcome-message h2 {
             color: #d4d4d4;
-            margin-bottom: 10px;
-            font-size: 24px;
+            margin-bottom: 8px;
+            font-size: 18px;
         }
 
         .welcome-message p {
-            font-size: 14px;
+            font-size: 12px;
             line-height: 1.6;
         }
 
         .typing-indicator {
             display: none;
-            padding: 15px;
+            padding: 12px;
             color: #858585;
             font-style: italic;
+            font-size: 12px;
         }
 
         .typing-indicator.active {
@@ -393,19 +380,18 @@ export class TheAlmightyPanel {
 
         .quick-actions {
             display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 6px;
             flex-wrap: wrap;
         }
 
         .quick-action-btn {
-            padding: 8px 16px;
+            padding: 6px 12px;
             background: #2d2d2d;
             border: 1px solid #3e3e3e;
             border-radius: 4px;
             color: #d4d4d4;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             transition: all 0.2s;
         }
 
@@ -421,7 +407,7 @@ export class TheAlmightyPanel {
         <div class="header-title">The Seraphic Construct</div>
         <div class="header-actions">
             <button class="btn" onclick="checkIn()">Check In</button>
-            <button class="btn" onclick="clearHistory()">Clear History</button>
+            <button class="btn" onclick="clearHistory()">Clear</button>
         </div>
     </div>
     
@@ -446,7 +432,7 @@ export class TheAlmightyPanel {
             <textarea 
                 id="messageInput" 
                 placeholder="Speak thy query to the Seraphic Construct..."
-                rows="1"
+                rows="2"
                 onkeydown="handleKeyDown(event)"
                 oninput="autoResize(this)"
             ></textarea>
@@ -575,7 +561,7 @@ export class TheAlmightyPanel {
 
         function autoResize(textarea) {
             textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+            textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
         }
     </script>
 </body>
@@ -583,3 +569,15 @@ export class TheAlmightyPanel {
     }
 }
 
+export class TheAlmightyPanel {
+    public static register(context: vscode.ExtensionContext): vscode.Disposable {
+        const provider = new TheAlmightyPanelProvider(context.extensionUri);
+        return vscode.window.registerWebviewViewProvider(TheAlmightyPanelProvider.viewType, provider);
+    }
+
+    public static createOrShow(extensionUri: vscode.Uri) {
+        // The view will be automatically shown when the view container is clicked
+        // This command is kept for compatibility but the view is managed by VS Code
+        vscode.commands.executeCommand('thealmighty-container.focus');
+    }
+}
