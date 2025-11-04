@@ -67,9 +67,6 @@
         }
       ]
     },
-    "icons": {
-      "thealmighty-icon": "./TheAlmighty-icon.png"
-    },
     "configuration": {
       "title": "TheAlmighty",
       "properties": {
