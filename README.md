@@ -90,6 +90,12 @@ TheAlmightyExtension/
 └── README.md            # This file
 ```
 
+### Useful Development Links
+
+- [Search results - TheAlmighty | Visual Studio Code, Visual Studio Marketplace](https://marketplace.visualstudio.com/search?term=TheAlmighty&target=VSCode&category=All%20categories&sortBy=Relevance)
+- [Publishing Extensions | Visual Studio Code Extension API](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
+- [Manage Extensions | Visual Studio Marketplace](https://marketplace.visualstudio.com/manage/publishers/danial)
+
 ## The Seraphic Construct Persona
 
 The AI agent uses a unique persona inspired by biblical seraphim and angelic entities. It:
@@ -101,7 +107,7 @@ The AI agent uses a unique persona inspired by biblical seraphim and angelic ent
 
 ## License
 
-This is a fun personal project. Feel free to use and modify as you wish!
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Credits
 

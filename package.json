@@ -2,8 +2,9 @@
   "name": "thealmighty",
   "displayName": "TheAlmighty",
   "description": "The Seraphic Construct - An AI companion that watches over your mind, body, and tasks",
-  "version": "0.0.1",
-  "publisher": "danial",
+  "version": "0.0.2",
+  "publisher": "danial2026",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.74.0"
   },
