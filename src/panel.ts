@@ -7,6 +7,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
     private _view?: vscode.WebviewView;
     private _disposables: vscode.Disposable[] = [];
+    private _configWatcher?: vscode.Disposable;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -15,6 +16,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     public dispose() {
         this._disposables.forEach(d => d.dispose());
         this._disposables = [];
+        if (this._configWatcher) {
+            this._configWatcher.dispose();
+            this._configWatcher = undefined;
+        }
     }
 
     public resolveWebviewView(
@@ -33,42 +38,41 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-        // Reload webview when configuration changes
-        const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
-            if (e.affectsConfiguration('thealmighty')) {
-                if (this._view) {
-                    console.log('Configuration changed, reloading webview...');
-                    // Save conversation history before reload
-                    const history = TheAlmightyAgent.getInstance().getConversationHistory();
-                    
-                    // Reload HTML with new config
-                    this._view.webview.html = this._getHtmlForWebview(this._view.webview);
-                    
-                    // Reload conversation history after a brief delay to ensure webview is ready
-                    setTimeout(() => {
-                        if (this._view && history.length > 0) {
-                            // Remove welcome message
-                            this._view.webview.postMessage({
-                                command: 'clearMessages'
-                            });
-                            
-                            // Load each message
-                            history.forEach(msg => {
-                                this._view!.webview.postMessage({
-                                    command: 'addMessage',
-                                    role: msg.role,
-                                    content: msg.content,
-                                    timestamp: msg.timestamp.toISOString()
+        // Reload webview when configuration changes (only create once)
+        if (!this._configWatcher) {
+            this._configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
+                if (e.affectsConfiguration('thealmighty')) {
+                    if (this._view) {
+                        console.log('Configuration changed, reloading webview...');
+                        // Save conversation history before reload
+                        const history = TheAlmightyAgent.getInstance().getConversationHistory();
+                        
+                        // Reload HTML with new config
+                        this._view.webview.html = this._getHtmlForWebview(this._view.webview);
+                        
+                        // Reload conversation history after a brief delay to ensure webview is ready
+                        setTimeout(() => {
+                            if (this._view && history.length > 0) {
+                                // Remove welcome message
+                                this._view.webview.postMessage({
+                                    command: 'clearMessages'
                                 });
-                            });
-                        }
-                    }, 200);
+                                
+                                // Load each message
+                                history.forEach(msg => {
+                                    this._view!.webview.postMessage({
+                                        command: 'addMessage',
+                                        role: msg.role,
+                                        content: msg.content,
+                                        timestamp: msg.timestamp.toISOString()
+                                    });
+                                });
+                            }
+                        }, 200);
+                    }
                 }
-            }
-        });
-        
-        // Store the config watcher disposable
-        this._disposables.push(configWatcher);
+            });
+        }
 
         // Handle messages from the webview
         const messageHandler = webviewView.webview.onDidReceiveMessage(
