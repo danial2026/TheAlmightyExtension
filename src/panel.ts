@@ -71,7 +71,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         this._disposables.push(configWatcher);
 
         // Handle messages from the webview
-        webviewView.webview.onDidReceiveMessage(
+        const messageHandler = webviewView.webview.onDidReceiveMessage(
             async (message) => {
                 switch (message.command) {
                     case 'ready':
@@ -93,6 +93,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 }
             }
         );
+        
+        // Store the message handler disposable
+        this._disposables.push(messageHandler);
     }
 
     private async _handleMessage(userMessage: string) {
