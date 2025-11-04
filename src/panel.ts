@@ -44,16 +44,19 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 if (e.affectsConfiguration('thealmighty')) {
                     if (this._view) {
                         console.log('Configuration changed, reloading webview...');
+                        // Always reload the HTML to pick up new config values
                         // Save conversation history before reload
                         const history = TheAlmightyAgent.getInstance().getConversationHistory();
                         
                         // Reload HTML with new config
                         this._view.webview.html = this._getHtmlForWebview(this._view.webview);
                         
-                        // Reload conversation history after a brief delay to ensure webview is ready
+                        // The webview will send 'ready' message after reload, which will trigger _loadConversationHistory
+                        // But we also set up a timeout as a fallback
                         setTimeout(() => {
                             if (this._view && history.length > 0) {
-                                // Remove welcome message
+                                // Check if messages were already loaded (via ready handler)
+                                // If not, load them now
                                 this._view.webview.postMessage({
                                     command: 'clearMessages'
                                 });
@@ -68,7 +71,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                                     });
                                 });
                             }
-                        }, 200);
+                        }, 300);
                     }
                 }
             });
