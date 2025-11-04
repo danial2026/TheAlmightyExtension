@@ -6,10 +6,16 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'thealmighty';
 
     private _view?: vscode.WebviewView;
+    private _disposables: vscode.Disposable[] = [];
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
     ) { }
+
+    public dispose() {
+        this._disposables.forEach(d => d.dispose());
+        this._disposables = [];
+    }
 
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
@@ -31,6 +37,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
             if (e.affectsConfiguration('thealmighty')) {
                 if (this._view) {
+                    console.log('Configuration changed, reloading webview...');
                     // Save conversation history before reload
                     const history = TheAlmightyAgent.getInstance().getConversationHistory();
                     
@@ -55,10 +62,13 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                                 });
                             });
                         }
-                    }, 100);
+                    }, 200);
                 }
             }
         });
+        
+        // Store the config watcher disposable
+        this._disposables.push(configWatcher);
 
         // Handle messages from the webview
         webviewView.webview.onDidReceiveMessage(
