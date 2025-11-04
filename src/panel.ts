@@ -227,6 +227,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             justify-content: center;
             width: 24px;
             height: 24px;
+        }
+
+        .btn::before {
             filter: grayscale(100%) brightness(0) invert(1);
         }
 
@@ -270,7 +273,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             border-radius: 50%;
             flex-shrink: 0;
             object-fit: cover;
-            filter: grayscale(100%) brightness(0) invert(1);
+            color: ${textColor};
         }
 
         .message.user .message-avatar {
@@ -369,7 +372,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             font-weight: 600;
             transition: opacity 0.2s;
             width: 100%;
-            filter: grayscale(100%) brightness(0) invert(1);
         }
 
         .send-btn:hover {
@@ -430,7 +432,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             display: flex;
             align-items: center;
             justify-content: center;
-            filter: grayscale(100%) brightness(0) invert(1);
         }
 
         .quick-action-btn:hover {
