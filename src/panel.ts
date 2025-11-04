@@ -30,7 +30,33 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         // Reload webview when configuration changes
         const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
             if (e.affectsConfiguration('thealmighty')) {
-                this._view!.webview.html = this._getHtmlForWebview(this._view!.webview);
+                if (this._view) {
+                    // Save conversation history before reload
+                    const history = TheAlmightyAgent.getInstance().getConversationHistory();
+                    
+                    // Reload HTML with new config
+                    this._view.webview.html = this._getHtmlForWebview(this._view.webview);
+                    
+                    // Reload conversation history after a brief delay to ensure webview is ready
+                    setTimeout(() => {
+                        if (this._view && history.length > 0) {
+                            // Remove welcome message
+                            this._view.webview.postMessage({
+                                command: 'clearMessages'
+                            });
+                            
+                            // Load each message
+                            history.forEach(msg => {
+                                this._view!.webview.postMessage({
+                                    command: 'addMessage',
+                                    role: msg.role,
+                                    content: msg.content,
+                                    timestamp: msg.timestamp.toISOString()
+                                });
+                            });
+                        }
+                    }, 100);
+                }
             }
         });
 
