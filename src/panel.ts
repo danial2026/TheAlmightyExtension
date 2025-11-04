@@ -159,6 +159,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         const assistantMessageColor = config.get<string>('assistantMessageColor', '#252526');
         const headerColor = config.get<string>('headerColor', '#2d2d2d');
         const inputColor = config.get<string>('inputColor', '#252526');
+        const iconColorsEnabled = config.get<boolean>('iconColorsEnabled', false);
+        const iconColor = config.get<string>('iconColor', '#ffffff');
+        
+        // Icon color: use custom icon color if colors disabled, otherwise use text color
+        const effectiveIconColor = iconColorsEnabled ? textColor : iconColor;
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -233,8 +238,8 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .btn svg {
             width: 18px;
             height: 18px;
-            fill: ${textColor};
-            stroke: ${textColor};
+            fill: ${effectiveIconColor};
+            stroke: ${effectiveIconColor};
         }
 
         .btn:hover {
@@ -286,7 +291,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .message-avatar svg {
             width: 20px;
             height: 20px;
-            fill: ${textColor};
+            fill: ${effectiveIconColor};
         }
 
         .message.user .message-avatar {
@@ -395,8 +400,8 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .send-btn svg {
             width: 16px;
             height: 16px;
-            fill: ${textColor};
-            stroke: ${textColor};
+            fill: ${effectiveIconColor};
+            stroke: ${effectiveIconColor};
         }
 
         .send-btn span {
@@ -468,7 +473,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .quick-action-btn svg {
             width: 16px;
             height: 16px;
-            fill: ${textColor};
+            fill: ${effectiveIconColor};
         }
 
         .quick-action-btn:hover {

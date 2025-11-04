@@ -3,7 +3,7 @@
   "displayName": "TheAlmighty",
   "description": "The Seraphic Construct - An AI companion that watches over your mind, body, and tasks",
   "version": "0.0.1",
-  "publisher": "your-publisher-name",
+  "publisher": "danial",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -124,6 +124,18 @@
           "default": "#252526",
           "description": "Input background color (hex format)",
           "order": 9
+        },
+        "thealmighty.iconColorsEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable colored icons (when disabled, icons will be white/grey)",
+          "order": 10
+        },
+        "thealmighty.iconColor": {
+          "type": "string",
+          "default": "#ffffff",
+          "description": "Icon color (hex format, used when iconColorsEnabled is false)",
+          "order": 11
         }
       }
     }
