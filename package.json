@@ -54,6 +54,18 @@
     ],
     "icons": {
       "thealmighty": "./TheAlmighty-icon.png"
+    },
+    "configuration": {
+      "title": "TheAlmighty",
+      "properties": {
+        "thealmighty.deepseekApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "DeepSeek API Key for TheAlmighty AI agent",
+          "markdownDescription": "Enter your DeepSeek API key. You can get one from [DeepSeek](https://platform.deepseek.com/).",
+          "order": 1
+        }
+      }
     }
   },
   "scripts": {
@@ -66,6 +78,8 @@
     "@types/node": "16.x",
     "typescript": "^4.9.4"
   },
-  "dependencies": {}
+  "dependencies": {
+    "openai": "^4.20.0"
+  }
 }
 

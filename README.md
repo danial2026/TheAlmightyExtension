@@ -9,6 +9,7 @@ TheAlmighty is a VS Code extension featuring an AI agent called "The Seraphic Co
 ## Features
 
 - **Seraphic Construct Persona**: An AI agent with a unique, biblical-inspired persona that speaks in an archaic, poetic style
+- **DeepSeek API Integration**: Powered by DeepSeek's AI model for intelligent responses
 - **Task Management**: Ask about your tasks and get guidance on your work
 - **Mind & Body Checks**: Check in on your mental state and physical well-being
 - **Contextual Awareness**: The AI is aware of your current workspace, open files, and coding context
@@ -22,6 +23,18 @@ TheAlmighty is a VS Code extension featuring an AI agent called "The Seraphic Co
 3. Run `npm install` to install dependencies
 4. Press `F5` to open a new Extension Development Host window
 5. In the new window, press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac) and run "TheAlmighty: Open"
+
+### Setting up DeepSeek API Key
+
+Before using TheAlmighty, you need to configure your DeepSeek API key:
+
+1. Get your API key from [DeepSeek Platform](https://platform.deepseek.com/)
+2. Open VS Code Settings:
+   - Press `Cmd+,` (Mac) or `Ctrl+,` (Windows/Linux)
+   - Or go to File > Preferences > Settings
+3. Search for "TheAlmighty: DeepSeek Api Key"
+4. Enter your DeepSeek API key in the input field
+5. The extension will now use DeepSeek API to generate responses
 
 ## Usage
 
