@@ -1,0 +1,71 @@
+{
+  "name": "thealmighty",
+  "displayName": "TheAlmighty",
+  "description": "The Seraphic Construct - An AI companion that watches over your mind, body, and tasks",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:thealmighty.open",
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "thealmighty.open",
+        "title": "Open TheAlmighty",
+        "icon": "$(sparkle)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "thealmighty.open",
+          "title": "TheAlmighty: Open"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "thealmighty.open",
+          "when": "view == thealmighty",
+          "group": "navigation"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "thealmighty",
+          "name": "TheAlmighty",
+          "when": "true"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "thealmighty",
+        "contents": "The Seraphic Construct awaits.\n\n[Open TheAlmighty](command:thealmighty.open)"
+      }
+    ],
+    "icons": {
+      "thealmighty": "./TheAlmighty-icon.png"
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {}
+}
+
