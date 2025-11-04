@@ -5,6 +5,10 @@
   "version": "0.0.2",
   "publisher": "danial2026",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danial2026/TheAlmightyExtension.git"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },
