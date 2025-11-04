@@ -444,9 +444,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         <img src="${iconUri}" alt="TheAlmighty" class="header-icon" />
         <div class="header-title">The Seraphic Construct</div>
         <div class="header-actions">
-            <button class="btn" onclick="openSettings()" title="Open Settings">⚙️</button>
-            <button class="btn" onclick="checkIn()" title="Check In">👁️</button>
-            <button class="btn" onclick="clearHistory()" title="Clear History">🗑️</button>
+            <button class="btn" id="settingsBtn" title="Open Settings">⚙️</button>
+            <button class="btn" id="checkInBtn" title="Check In">👁️</button>
+            <button class="btn" id="clearHistoryBtn" title="Clear History">🗑️</button>
         </div>
     </div>
     
@@ -491,6 +491,22 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
         // Notify extension that webview is ready
         vscode.postMessage({ command: 'ready' });
+
+        // Set up button click handlers
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', openSettings);
+        }
+
+        const checkInBtn = document.getElementById('checkInBtn');
+        if (checkInBtn) {
+            checkInBtn.addEventListener('click', checkIn);
+        }
+
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        if (clearHistoryBtn) {
+            clearHistoryBtn.addEventListener('click', clearHistory);
+        }
 
         // Handle messages from extension
         window.addEventListener('message', event => {
@@ -592,10 +608,14 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         function openSettings() {
+            console.log('openSettings called');
             vscode.postMessage({
                 command: 'openSettings'
             });
         }
+
+        // Make sure functions are accessible
+        window.openSettings = openSettings;
 
         function handleKeyDown(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
