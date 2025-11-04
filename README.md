@@ -95,6 +95,7 @@ TheAlmightyExtension/
 - [Search results - TheAlmighty | Visual Studio Code, Visual Studio Marketplace](https://marketplace.visualstudio.com/search?term=TheAlmighty&target=VSCode&category=All%20categories&sortBy=Relevance)
 - [Publishing Extensions | Visual Studio Code Extension API](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
 - [Manage Extensions | Visual Studio Marketplace](https://marketplace.visualstudio.com/manage/publishers/danial)
+- [Open VSX Registry](https://open-vsx.org/) - For Cursor IDE compatibility
 
 ## The Seraphic Construct Persona
 
