@@ -4,47 +4,25 @@ import { TheAlmightyAgent } from './agent';
 
 export class TheAlmightyPanel {
     public static currentPanel: TheAlmightyPanel | undefined;
-    public static readonly viewType = 'theAlmighty';
+    public static readonly viewType = 'thealmighty';
 
-    private readonly _panel: vscode.WebviewPanel;
+    private readonly _view: vscode.WebviewView;
     private readonly _extensionUri: vscode.Uri;
     private _disposables: vscode.Disposable[] = [];
 
+    public static register(context: vscode.ExtensionContext): vscode.Disposable {
+        const provider = new TheAlmightyPanelProvider(context.extensionUri);
+        return vscode.window.registerWebviewViewProvider(TheAlmightyPanel.viewType, provider);
+    }
+
     public static createOrShow(extensionUri: vscode.Uri) {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn
-            : undefined;
-
-        // If we already have a panel, show it.
-        if (TheAlmightyPanel.currentPanel) {
-            TheAlmightyPanel.currentPanel._panel.reveal(column);
-            return;
-        }
-
-        // Otherwise, create a new panel.
-        const panel = vscode.window.createWebviewPanel(
-            TheAlmightyPanel.viewType,
-            'TheAlmighty',
-            column || vscode.ViewColumn.One,
-            {
-                enableScripts: true,
-                localResourceRoots: [
-                    vscode.Uri.joinPath(extensionUri, 'media'),
-                    vscode.Uri.joinPath(extensionUri)
-                ],
-                retainContextWhenHidden: true
-            }
-        );
-
-        TheAlmightyPanel.currentPanel = new TheAlmightyPanel(panel, extensionUri);
+        // The view will be automatically shown when the view container is clicked
+        // This command is kept for compatibility but the view is managed by VS Code
+        vscode.commands.executeCommand('thealmighty-container.focus');
     }
 
-    public static revive(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
-        TheAlmightyPanel.currentPanel = new TheAlmightyPanel(panel, extensionUri);
-    }
-
-    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
-        this._panel = panel;
+    private constructor(view: vscode.WebviewView, extensionUri: vscode.Uri) {
+        this._view = view;
         this._extensionUri = extensionUri;
 
         // Set the webview's initial html content

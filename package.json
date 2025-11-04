@@ -37,21 +37,25 @@
         }
       ]
     },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "thealmighty-container",
+          "title": "TheAlmighty",
+          "icon": "./TheAlmighty-icon.png"
+        }
+      ]
+    },
     "views": {
-      "explorer": [
+      "thealmighty-container": [
         {
           "id": "thealmighty",
           "name": "TheAlmighty",
+          "type": "webview",
           "when": "true"
         }
       ]
     },
-    "viewsWelcome": [
-      {
-        "view": "thealmighty",
-        "contents": "The Seraphic Construct awaits.\n\n[Open TheAlmighty](command:thealmighty.open)"
-      }
-    ],
     "icons": {
       "thealmighty": "./TheAlmighty-icon.png"
     },
