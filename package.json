@@ -3,7 +3,7 @@
   "displayName": "TheAlmighty",
   "description": "The Seraphic Construct - An AI companion that watches over your mind, body, and tasks",
   "version": "0.0.1",
-  "publisher": "danial",
+  "publisher": "your-publisher-name",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -21,6 +21,11 @@
         "command": "thealmighty.open",
         "title": "Open TheAlmighty",
         "icon": "$(sparkle)"
+      },
+      {
+        "command": "thealmighty.openSettings",
+        "title": "Open Settings",
+        "icon": "$(settings-gear)"
       }
     ],
     "menus": {
@@ -33,6 +38,11 @@
       "view/title": [
         {
           "command": "thealmighty.open",
+          "when": "view == thealmighty",
+          "group": "navigation"
+        },
+        {
+          "command": "thealmighty.openSettings",
           "when": "view == thealmighty",
           "group": "navigation"
         }
@@ -87,4 +97,3 @@
     "openai": "^4.20.0"
   }
 }
-

@@ -44,6 +44,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                     case 'clearHistory':
                         this._handleClearHistory();
                         break;
+                    case 'openSettings':
+                        this._handleOpenSettings();
+                        break;
                 }
             }
         );
@@ -102,6 +105,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         this._view.webview.postMessage({
             command: 'clearMessages'
         });
+    }
+
+    private _handleOpenSettings() {
+        vscode.commands.executeCommand('workbench.action.openSettings', '@thealmighty.deepseekApiKey');
     }
 
     private _loadConversationHistory() {
@@ -406,6 +413,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         <img src="${iconUri}" alt="TheAlmighty" class="header-icon" />
         <div class="header-title">The Seraphic Construct</div>
         <div class="header-actions">
+            <button class="btn" onclick="openSettings()" title="Open Settings">Settings</button>
             <button class="btn" onclick="checkIn()">Check In</button>
             <button class="btn" onclick="clearHistory()">Clear</button>
         </div>
@@ -550,6 +558,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                     command: 'clearHistory'
                 });
             }
+        }
+
+        function openSettings() {
+            vscode.postMessage({
+                command: 'openSettings'
+            });
         }
 
         function handleKeyDown(event) {

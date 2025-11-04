@@ -16,6 +16,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(openCommand);
 
+    // Register the command to open settings
+    const openSettingsCommand = vscode.commands.registerCommand('thealmighty.openSettings', () => {
+        vscode.commands.executeCommand('workbench.action.openSettings', '@thealmighty.deepseekApiKey');
+    });
+
+    context.subscriptions.push(openSettingsCommand);
+
     // Initialize the agent
     TheAlmightyAgent.getInstance().initialize(context);
 }
