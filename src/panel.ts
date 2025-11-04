@@ -162,7 +162,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         const iconColorsEnabled = config.get<boolean>('iconColorsEnabled', false);
         const iconColor = config.get<string>('iconColor', '#ffffff');
         
-        // Icon color: use custom icon color if colors disabled, otherwise use text color
+        // Icon color: use custom icon color when colors disabled (white mode), otherwise use text color
         const effectiveIconColor = iconColorsEnabled ? textColor : iconColor;
 
         return `<!DOCTYPE html>
