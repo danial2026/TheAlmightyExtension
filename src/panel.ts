@@ -27,6 +27,13 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
+        // Reload webview when configuration changes
+        const configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
+            if (e.affectsConfiguration('thealmighty')) {
+                this._view!.webview.html = this._getHtmlForWebview(this._view!.webview);
+            }
+        });
+
         // Handle messages from the webview
         webviewView.webview.onDidReceiveMessage(
             async (message) => {
