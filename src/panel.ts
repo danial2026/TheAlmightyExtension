@@ -227,10 +227,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             justify-content: center;
             width: 24px;
             height: 24px;
-        }
-
-        .btn::before {
-            filter: grayscale(100%) brightness(0) invert(1);
+            pointer-events: auto;
         }
 
         .btn:hover {
@@ -372,6 +369,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             font-weight: 600;
             transition: opacity 0.2s;
             width: 100%;
+            pointer-events: auto;
         }
 
         .send-btn:hover {
@@ -381,6 +379,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .send-btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
+            pointer-events: none;
         }
 
         .welcome-message {
@@ -432,6 +431,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             display: flex;
             align-items: center;
             justify-content: center;
+            pointer-events: auto;
         }
 
         .quick-action-btn:hover {
