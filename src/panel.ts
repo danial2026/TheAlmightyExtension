@@ -50,9 +50,6 @@ export class TheAlmightyPanel {
         // Set the webview's initial html content
         this._update();
 
-        // Load conversation history
-        this._loadConversationHistory();
-
         // Listen for when the panel is disposed
         // This happens when the user closes the panel or when the panel is closed programmatically
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
@@ -61,6 +58,10 @@ export class TheAlmightyPanel {
         this._panel.webview.onDidReceiveMessage(
             async (message) => {
                 switch (message.command) {
+                    case 'ready':
+                        // Webview is ready, load history
+                        this._loadConversationHistory();
+                        break;
                     case 'sendMessage':
                         await this._handleMessage(message.text);
                         break;
@@ -484,6 +485,9 @@ export class TheAlmightyPanel {
 
         // Remove welcome message on first message
         let hasMessages = false;
+
+        // Notify extension that webview is ready
+        vscode.postMessage({ command: 'ready' });
 
         // Handle messages from extension
         window.addEventListener('message', event => {
