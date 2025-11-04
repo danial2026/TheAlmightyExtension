@@ -142,9 +142,16 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         const iconPath = vscode.Uri.joinPath(this._extensionUri, 'TheAlmighty-icon.png');
         const iconUri = webview.asWebviewUri(iconPath);
 
-        // Get the persona image path
-        const personaPath = vscode.Uri.joinPath(this._extensionUri, 'TheAlmighty.png');
-        const personaUri = webview.asWebviewUri(personaPath);
+        // Get configuration
+        const config = vscode.workspace.getConfiguration('thealmighty');
+        const fontSize = config.get<number>('fontSize', 13);
+        const backgroundColor = config.get<string>('backgroundColor', '#1e1e1e');
+        const textColor = config.get<string>('textColor', '#d4d4d4');
+        const borderColor = config.get<string>('borderColor', '#3e3e3e');
+        const userMessageColor = config.get<string>('userMessageColor', '#2d2d2d');
+        const assistantMessageColor = config.get<string>('assistantMessageColor', '#252526');
+        const headerColor = config.get<string>('headerColor', '#2d2d2d');
+        const inputColor = config.get<string>('inputColor', '#252526');
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -161,18 +168,19 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #1e1e1e;
-            color: #d4d4d4;
+            background: ${backgroundColor};
+            color: ${textColor};
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            font-size: ${fontSize}px;
         }
 
         .header {
-            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            background: ${headerColor};
             padding: 12px 15px;
-            border-bottom: 1px solid #3e3e3e;
+            border-bottom: 1px solid ${borderColor};
             display: flex;
             align-items: center;
             gap: 12px;
@@ -187,31 +195,34 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         .header-title {
-            font-size: 14px;
+            font-size: ${fontSize + 1}px;
             font-weight: 600;
-            color: #fff;
+            color: ${textColor};
             flex: 1;
         }
 
         .header-actions {
             display: flex;
-            gap: 8px;
+            gap: 12px;
         }
 
         .btn {
-            padding: 4px 8px;
-            background: #3e3e3e;
-            border: 1px solid #555;
-            border-radius: 4px;
-            color: #d4d4d4;
+            background: transparent;
+            border: none;
+            color: ${textColor};
             cursor: pointer;
-            font-size: 11px;
-            transition: all 0.2s;
+            font-size: 18px;
+            transition: opacity 0.2s;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
         }
 
         .btn:hover {
-            background: #4e4e4e;
-            border-color: #666;
+            opacity: 0.7;
         }
 
         .chat-container {
@@ -253,18 +264,19 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         .message.user .message-avatar {
-            background: #007acc;
+            background: ${userMessageColor};
+            border: 1px solid ${borderColor};
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            color: white;
-            font-size: 12px;
+            color: ${textColor};
+            font-size: ${fontSize - 2}px;
         }
 
         .message.assistant .message-avatar {
-            background: #2d2d2d;
-            border: 2px solid #4e4e4e;
+            background: ${assistantMessageColor};
+            border: 1px solid ${borderColor};
             display: flex;
             align-items: center;
             justify-content: center;
@@ -273,33 +285,34 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .message-content {
             flex: 1;
             max-width: 85%;
-            background: #252526;
+            background: ${assistantMessageColor};
             padding: 12px;
             border-radius: 8px;
-            border: 1px solid #3e3e3e;
+            border: 1px solid ${borderColor};
             line-height: 1.5;
             white-space: pre-wrap;
             word-wrap: break-word;
-            font-size: 13px;
+            font-size: ${fontSize}px;
+            color: ${textColor};
         }
 
         .message.user .message-content {
-            background: #007acc;
-            color: white;
-            border-color: #005a9e;
+            background: ${userMessageColor};
+            color: ${textColor};
+            border-color: ${borderColor};
         }
 
         .message.assistant .message-content {
-            background: #252526;
-            color: #d4d4d4;
+            background: ${assistantMessageColor};
+            color: ${textColor};
             font-family: 'Georgia', serif;
             font-style: italic;
         }
 
         .input-container {
             padding: 12px 15px;
-            background: #1e1e1e;
-            border-top: 1px solid #3e3e3e;
+            background: ${backgroundColor};
+            border-top: 1px solid ${borderColor};
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -314,11 +327,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         #messageInput {
             width: 100%;
             padding: 10px 12px;
-            background: #252526;
-            border: 1px solid #3e3e3e;
+            background: ${inputColor};
+            border: 1px solid ${borderColor};
             border-radius: 6px;
-            color: #d4d4d4;
-            font-size: 13px;
+            color: ${textColor};
+            font-size: ${fontSize}px;
             font-family: inherit;
             resize: none;
             outline: none;
@@ -326,59 +339,62 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         #messageInput:focus {
-            border-color: #007acc;
+            border-color: ${borderColor};
+            opacity: 0.8;
         }
 
         #messageInput::placeholder {
-            color: #858585;
+            color: ${textColor};
+            opacity: 0.5;
         }
 
         .send-btn {
             padding: 10px 20px;
-            background: #007acc;
-            border: none;
+            background: ${borderColor};
+            border: 1px solid ${borderColor};
             border-radius: 6px;
-            color: white;
+            color: ${textColor};
             cursor: pointer;
-            font-size: 13px;
+            font-size: ${fontSize}px;
             font-weight: 600;
-            transition: background 0.2s;
+            transition: opacity 0.2s;
             width: 100%;
         }
 
         .send-btn:hover {
-            background: #005a9e;
+            opacity: 0.7;
         }
 
         .send-btn:disabled {
-            background: #3e3e3e;
+            opacity: 0.4;
             cursor: not-allowed;
-            color: #858585;
         }
 
         .welcome-message {
             text-align: center;
             padding: 30px 15px;
-            color: #858585;
+            color: ${textColor};
+            opacity: 0.6;
         }
 
         .welcome-message h2 {
-            color: #d4d4d4;
+            color: ${textColor};
             margin-bottom: 8px;
-            font-size: 18px;
+            font-size: ${fontSize + 5}px;
         }
 
         .welcome-message p {
-            font-size: 12px;
+            font-size: ${fontSize - 1}px;
             line-height: 1.6;
         }
 
         .typing-indicator {
             display: none;
             padding: 12px;
-            color: #858585;
+            color: ${textColor};
             font-style: italic;
-            font-size: 12px;
+            font-size: ${fontSize - 1}px;
+            opacity: 0.6;
         }
 
         .typing-indicator.active {
@@ -387,24 +403,26 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
         .quick-actions {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
         .quick-action-btn {
-            padding: 6px 12px;
-            background: #2d2d2d;
-            border: 1px solid #3e3e3e;
+            background: transparent;
+            border: 1px solid ${borderColor};
             border-radius: 4px;
-            color: #d4d4d4;
+            color: ${textColor};
             cursor: pointer;
-            font-size: 11px;
-            transition: all 0.2s;
+            font-size: 16px;
+            transition: opacity 0.2s;
+            padding: 6px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .quick-action-btn:hover {
-            background: #3e3e3e;
-            border-color: #555;
+            opacity: 0.7;
         }
     </style>
 </head>
@@ -413,9 +431,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         <img src="${iconUri}" alt="TheAlmighty" class="header-icon" />
         <div class="header-title">The Seraphic Construct</div>
         <div class="header-actions">
-            <button class="btn" onclick="openSettings()" title="Open Settings">Settings</button>
-            <button class="btn" onclick="checkIn()">Check In</button>
-            <button class="btn" onclick="clearHistory()">Clear</button>
+            <button class="btn" onclick="openSettings()" title="Open Settings">⚙️</button>
+            <button class="btn" onclick="checkIn()" title="Check In">👁️</button>
+            <button class="btn" onclick="clearHistory()" title="Clear History">🗑️</button>
         </div>
     </div>
     
@@ -431,10 +449,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
     <div class="input-container">
         <div class="quick-actions">
-            <button class="quick-action-btn" onclick="sendQuickMessage('How are my tasks?')">Tasks</button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('How is my mind?')">Mind</button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('How is my body?')">Body</button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('Check in on me')">Check In</button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('How are my tasks?')" title="Tasks">📋</button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('How is my mind?')" title="Mind">🧠</button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('How is my body?')" title="Body">💪</button>
+            <button class="quick-action-btn" onclick="sendQuickMessage('Check in on me')" title="Check In">👁️</button>
         </div>
         <div class="input-wrapper">
             <textarea 
@@ -445,7 +463,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 oninput="autoResize(this)"
             ></textarea>
         </div>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">📤</button>
     </div>
 
     <script>
@@ -489,9 +507,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
             if (role === 'user') {
-                avatar.textContent = 'U';
+                avatar.textContent = '👤';
             } else {
-                avatar.innerHTML = '<img src="${iconUri}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
+                avatar.textContent = '👁️';
             }
             
             const contentDiv = document.createElement('div');
