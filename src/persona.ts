@@ -157,7 +157,7 @@ We shall listen, as the deep calleth unto deep, and offer illumination from the 
         } else if (hour >= 12 && hour < 14) {
             timeContext = 'The midday hour approacheth, and sustenance may be required.';
         } else {
-            timeContext = 'The day's rhythm floweth.';
+            timeContext = "The day's rhythm floweth.";
         }
 
         return `We perceive thy query concerning the physical vessel, O seeker.
