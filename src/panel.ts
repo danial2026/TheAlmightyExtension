@@ -597,9 +597,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         .header-icon-large {
-            width: 100%;
+            width: 90%;
             height: auto;
-            max-height: 200px;
+            max-height: 320px;
             object-fit: contain;
             display: block;
             margin-bottom: 15px;
@@ -610,7 +610,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             top: 100%;
             right: 0;
             background: ${backgroundColor};
-            border: 1px solid ${borderColor};
+            border: 2px solid ${borderColor};
             border-top: none;
             max-height: 400px;
             min-width: 300px;
@@ -626,7 +626,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
         .history-header {
             padding: 12px 15px;
-            border-bottom: 1px solid ${borderColor};
+            border-bottom: 2px solid ${borderColor};
             font-weight: 600;
             font-size: ${fontSize}px;
             color: ${textColor};
@@ -665,7 +665,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
         .history-item {
             padding: 12px 15px;
-            border-bottom: 1px solid ${borderColor};
+            border-bottom: 2px solid ${borderColor};
             display: flex;
             flex-direction: column;
             gap: 4px;
@@ -715,7 +715,8 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             flex-shrink: 0;
             opacity: 0.6;
             pointer-events: auto;
-            z-index: 10;
+            z-index: 100;
+            position: relative;
         }
 
         .history-item:hover .history-item-delete {
@@ -736,7 +737,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 </head>
 <body>
     <div class="header">
-        <img src="${iconUri}" alt="TheAlmighty" class="header-icon" />
         <div class="header-title">The Seraphic Construct</div>
         <div class="header-actions" style="position: relative;">
             <button class="btn" id="historyBtn" title="History">
@@ -971,12 +971,17 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'history-item-delete';
                 deleteBtn.title = 'Delete session';
-                deleteBtn.onclick = (e) => {
+                deleteBtn.type = 'button';
+                deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+                
+                // Use addEventListener for better event handling
+                deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
+                    e.stopImmediatePropagation();
                     deleteSessionFromHistory(session.id, e);
-                };
-                deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+                    return false;
+                });
                 
                 const meta = document.createElement('div');
                 meta.className = 'history-item-meta';
