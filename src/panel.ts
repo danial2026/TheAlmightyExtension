@@ -1029,21 +1029,27 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 deleteBtn.className = 'history-item-delete';
                 deleteBtn.title = 'Delete session';
                 deleteBtn.type = 'button';
-                deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+                deleteBtn.textContent = '🗑️'; // Use emoji for now to make sure it's visible
                 deleteBtn.setAttribute('data-session-id', session.id);
+                deleteBtn.style.pointerEvents = 'auto';
+                deleteBtn.style.cursor = 'pointer';
                 
-                // Handle delete button click 
-                deleteBtn.addEventListener('click', (e) => {
+                console.log('Creating delete button for session:', session.id);
+                
+                // Handle delete button click with simple onclick
+                deleteBtn.onclick = (e) => {
+                    console.log('ONCLICK FIRED for session:', session.id);
                     e.stopPropagation();
                     e.preventDefault();
-                    console.log('Delete button clicked for session:', session.id);
+                    alert('Delete button clicked! Session: ' + session.id);
                     const confirmed = confirm('Delete this chat session?');
                     console.log('Confirmation result:', confirmed);
                     if (confirmed) {
                         console.log('Sending deleteSession message for:', session.id);
                         vscode.postMessage({ command: 'deleteSession', sessionId: session.id });
                     }
-                });
+                    return false;
+                };
                 
                 const meta = document.createElement('div');
                 meta.className = 'history-item-meta';
