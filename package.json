@@ -114,7 +114,7 @@
         },
         "thealmighty.assistantMessageColor": {
           "type": "string",
-          "default": "#252526",
+          "default": "#232436",
           "description": "Assistant message background color (hex format)",
           "order": 7
         },

@@ -301,9 +301,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     const userMessageColor = config.get<string>("userMessageColor", "#2d2d2d");
     const assistantMessageColor = config.get<string>(
       "assistantMessageColor",
-      "#252526"
+      "#232436"
     );
-    const inputColor = config.get<string>("inputColor", "#252526");
+    const inputColor = config.get<string>("inputColor", "#232436");
     const iconColorsEnabled = config.get<boolean>("iconColorsEnabled", false);
     const iconColor = config.get<string>("iconColor", "#ffffff");
 
@@ -444,7 +444,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .input-container {
             padding: 12px 15px;
             background: ${backgroundColor};
-            border-top: 1px solid ${borderColor};
             display: flex;
             flex-direction: column;
             gap: 8px;
