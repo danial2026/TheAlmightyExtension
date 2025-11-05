@@ -216,12 +216,16 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
   }
 
   private _handleDeleteSession(sessionId: string) {
+    console.log("_handleDeleteSession called with sessionId:", sessionId);
     if (!this._view) {
+      console.log("No view available");
       return;
     }
 
     const agent = TheAlmightyAgent.getInstance();
-    if (agent.deleteSession(sessionId)) {
+    const result = agent.deleteSession(sessionId);
+    console.log("deleteSession result:", result);
+    if (result) {
       this._loadConversationHistory();
       this._handleGetSessions();
     }
@@ -1010,29 +1014,35 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 deleteBtn.title = 'Delete session';
                 deleteBtn.type = 'button';
                 deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+                deleteBtn.setAttribute('data-session-id', session.id);
                 
-                // Handle delete button click - must be before content click handler
-                deleteBtn.onclick = (e) => {
+                // Handle delete button click with addEventListener for better event handling
+                deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     console.log('Delete button clicked for session:', session.id);
-                    if (confirm('Delete this chat session?')) {
+                    const confirmed = confirm('Delete this chat session?');
+                    console.log('Confirmation result:', confirmed);
+                    if (confirmed) {
+                        console.log('Sending deleteSession message for:', session.id);
                         vscode.postMessage({ command: 'deleteSession', sessionId: session.id });
                     }
-                    return false;
-                };
+                }, true);
                 
                 // Handle content click (for switching sessions)
-                content.onclick = (e) => {
+                content.addEventListener('click', (e) => {
                     // Don't switch if clicking the delete button
-                    if (e.target === deleteBtn || deleteBtn.contains(e.target)) {
+                    const target = e.target;
+                    if (target === deleteBtn || deleteBtn.contains(target)) {
+                        console.log('Click on delete button area, ignoring switch');
                         return;
                     }
+                    console.log('Switching to session:', session.id);
                     switchSession(session.id);
                     if (historyDropdown) {
                         historyDropdown.classList.remove('open');
                     }
-                };
+                });
                 
                 const meta = document.createElement('div');
                 meta.className = 'history-item-meta';

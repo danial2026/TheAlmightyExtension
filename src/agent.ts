@@ -166,10 +166,14 @@ export class TheAlmightyAgent {
     }
 
     public deleteSession(sessionId: string): boolean {
+        console.log('Agent.deleteSession called for:', sessionId);
         const index = this.sessions.findIndex(s => s.id === sessionId);
+        console.log('Session index:', index, 'Total sessions:', this.sessions.length);
         if (index !== -1) {
+            console.log('Deleting session at index:', index);
             this.sessions.splice(index, 1);
             if (this.currentSessionId === sessionId) {
+                console.log('Deleted session was current, switching...');
                 this.currentSessionId = null;
                 this.conversationHistory = [];
                 if (this.sessions.length > 0) {
@@ -177,8 +181,10 @@ export class TheAlmightyAgent {
                 }
             }
             this.saveSessions();
+            console.log('Session deleted successfully');
             return true;
         }
+        console.log('Session not found');
         return false;
     }
 
