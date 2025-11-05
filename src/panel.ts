@@ -1,305 +1,316 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
-import { TheAlmightyAgent } from './agent';
+import * as vscode from "vscode";
+import * as path from "path";
+import { TheAlmightyAgent } from "./agent";
 
 class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
-    public static readonly viewType = 'thealmighty';
+  public static readonly viewType = "thealmighty";
 
-    private _view?: vscode.WebviewView;
-    private _disposables: vscode.Disposable[] = [];
-    private _configWatcher?: vscode.Disposable;
+  private _view?: vscode.WebviewView;
+  private _disposables: vscode.Disposable[] = [];
+  private _configWatcher?: vscode.Disposable;
 
-    constructor(
-        private readonly _extensionUri: vscode.Uri,
-    ) { }
+  constructor(private readonly _extensionUri: vscode.Uri) {}
 
-    public dispose() {
-        this._disposables.forEach(d => d.dispose());
-        this._disposables = [];
-        if (this._configWatcher) {
-            this._configWatcher.dispose();
-            this._configWatcher = undefined;
-        }
+  public dispose() {
+    this._disposables.forEach((d) => d.dispose());
+    this._disposables = [];
+    if (this._configWatcher) {
+      this._configWatcher.dispose();
+      this._configWatcher = undefined;
     }
+  }
 
-    public resolveWebviewView(
-        webviewView: vscode.WebviewView,
-        context: vscode.WebviewViewResolveContext,
-        _token: vscode.CancellationToken,
-    ) {
-        this._view = webviewView;
+  public resolveWebviewView(
+    webviewView: vscode.WebviewView,
+    context: vscode.WebviewViewResolveContext,
+    _token: vscode.CancellationToken
+  ) {
+    this._view = webviewView;
 
-        webviewView.webview.options = {
-            enableScripts: true,
-            localResourceRoots: [
-                vscode.Uri.joinPath(this._extensionUri),
-            ]
-        };
+    webviewView.webview.options = {
+      enableScripts: true,
+      localResourceRoots: [vscode.Uri.joinPath(this._extensionUri)],
+    };
 
-        webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-        // Reload webview when configuration changes (only create once)
-        if (!this._configWatcher) {
-            this._configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
-                if (e.affectsConfiguration('thealmighty')) {
-                    if (this._view) {
-                        console.log('Configuration changed, reloading webview...');
-                        // Always reload the HTML to pick up new config values
-                        // Save conversation history before reload
-                        const history = TheAlmightyAgent.getInstance().getConversationHistory();
-                        
-                        // Reload HTML with new config
-                        this._view.webview.html = this._getHtmlForWebview(this._view.webview);
-                        
-                        // The webview will send 'ready' message after reload, which will trigger _loadConversationHistory
-                        // But we also set up a timeout as a fallback
-                        setTimeout(() => {
-                            if (this._view && history.length > 0) {
-                                // Check if messages were already loaded (via ready handler)
-                                // If not, load them now
-                                this._view.webview.postMessage({
-                                    command: 'clearMessages'
-                                });
-                                
-                                // Load each message
-                                history.forEach(msg => {
-                                    this._view!.webview.postMessage({
-                                        command: 'addMessage',
-                                        role: msg.role,
-                                        content: msg.content,
-                                        timestamp: msg.timestamp.toISOString()
-                                    });
-                                });
-                            }
-                        }, 300);
-                    }
-                }
-            });
-        }
+    // Reload webview when configuration changes (only create once)
+    if (!this._configWatcher) {
+      this._configWatcher = vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration("thealmighty")) {
+          if (this._view) {
+            console.log("Configuration changed, reloading webview...");
+            // Always reload the HTML to pick up new config values
+            // Save conversation history before reload
+            const history =
+              TheAlmightyAgent.getInstance().getConversationHistory();
 
-        // Handle messages from the webview
-        const messageHandler = webviewView.webview.onDidReceiveMessage(
-            async (message) => {
-                switch (message.command) {
-                    case 'ready':
-                        // Webview is ready, load history and sessions
-                        this._loadConversationHistory();
-                        this._handleGetSessions();
-                        break;
-                    case 'sendMessage':
-                        await this._handleMessage(message.text);
-                        break;
-                    case 'checkIn':
-                        await this._handleCheckIn();
-                        break;
-                    case 'clearHistory':
-                        this._handleClearHistory();
-                        break;
-                    case 'openSettings':
-                        this._handleOpenSettings();
-                        break;
-                    case 'createNewSession':
-                        this._handleCreateNewSession();
-                        break;
-                    case 'switchSession':
-                        this._handleSwitchSession(message.sessionId);
-                        break;
-                    case 'deleteSession':
-                        this._handleDeleteSession(message.sessionId);
-                        break;
-                    case 'updateSessionTitle':
-                        this._handleUpdateSessionTitle(message.sessionId, message.title);
-                        break;
-                    case 'getSessions':
-                        this._handleGetSessions();
-                        break;
-                }
-            }
-        );
-        
-        // Store the message handler disposable
-        this._disposables.push(messageHandler);
-    }
+            // Reload HTML with new config
+            this._view.webview.html = this._getHtmlForWebview(
+              this._view.webview
+            );
 
-    private async _handleMessage(userMessage: string) {
-        if (!userMessage.trim() || !this._view) {
-            return;
-        }
+            // The webview will send 'ready' message after reload, which will trigger _loadConversationHistory
+            // But we also set up a timeout as a fallback
+            setTimeout(() => {
+              if (this._view && history.length > 0) {
+                // Check if messages were already loaded (via ready handler)
+                // If not, load them now
+                this._view.webview.postMessage({
+                  command: "clearMessages",
+                });
 
-        // Add user message to UI
-        this._view.webview.postMessage({
-            command: 'addMessage',
-            role: 'user',
-            content: userMessage,
-            timestamp: new Date().toISOString()
-        });
-
-        // Get response from agent
-        const agent = TheAlmightyAgent.getInstance();
-        const response = await agent.processMessage(userMessage);
-
-        // Add response to UI
-        this._view.webview.postMessage({
-            command: 'addMessage',
-            role: 'assistant',
-            content: response,
-            timestamp: new Date().toISOString()
-        });
-    }
-
-    private async _handleCheckIn() {
-        if (!this._view) {
-            return;
-        }
-
-        const agent = TheAlmightyAgent.getInstance();
-        const response = await agent.generateCheckIn();
-        
-        this._view.webview.postMessage({
-            command: 'addMessage',
-            role: 'assistant',
-            content: response,
-            timestamp: new Date().toISOString()
-        });
-    }
-
-    private _handleClearHistory() {
-        if (!this._view) {
-            return;
-        }
-
-        const agent = TheAlmightyAgent.getInstance();
-        agent.clearConversationHistory();
-        
-        this._view.webview.postMessage({
-            command: 'clearMessages'
-        });
-    }
-
-    private _handleOpenSettings() {
-        vscode.commands.executeCommand('workbench.action.openSettings', '@thealmighty.deepseekApiKey');
-    }
-
-    private _handleCreateNewSession() {
-        if (!this._view) {
-            return;
-        }
-
-        const agent = TheAlmightyAgent.getInstance();
-        const sessionId = agent.createNewSession('New Chat');
-        
-        this._view.webview.postMessage({
-            command: 'clearMessages'
-        });
-        
-        this._handleGetSessions();
-    }
-
-    private _handleSwitchSession(sessionId: string) {
-        if (!this._view) {
-            return;
-        }
-
-        const agent = TheAlmightyAgent.getInstance();
-        if (agent.switchSession(sessionId)) {
-            this._loadConversationHistory();
-            this._view.webview.postMessage({
-                command: 'sessionSwitched',
-                sessionId: sessionId
-            });
-        }
-    }
-
-    private _handleDeleteSession(sessionId: string) {
-        if (!this._view) {
-            return;
-        }
-
-        const agent = TheAlmightyAgent.getInstance();
-        if (agent.deleteSession(sessionId)) {
-            this._loadConversationHistory();
-            this._handleGetSessions();
-        }
-    }
-
-    private _handleUpdateSessionTitle(sessionId: string, title: string) {
-        if (!this._view) {
-            return;
-        }
-
-        const agent = TheAlmightyAgent.getInstance();
-        agent.updateSessionTitle(sessionId, title);
-        this._handleGetSessions();
-    }
-
-    private _handleGetSessions() {
-        if (!this._view) {
-            return;
-        }
-
-        const agent = TheAlmightyAgent.getInstance();
-        const sessions = agent.getSessions();
-        const currentSessionId = agent.getCurrentSessionId();
-        
-        this._view.webview.postMessage({
-            command: 'sessionsUpdated',
-            sessions: sessions.map(s => ({
-                id: s.id,
-                title: s.title,
-                createdAt: s.createdAt.toISOString(),
-                updatedAt: s.updatedAt.toISOString()
-            })),
-            currentSessionId: currentSessionId
-        });
-    }
-
-    private _loadConversationHistory() {
-        if (!this._view) {
-            return;
-        }
-
-        const agent = TheAlmightyAgent.getInstance();
-        const history = agent.getConversationHistory();
-        
-        if (history.length > 0) {
-            // Remove welcome message
-            this._view.webview.postMessage({
-                command: 'clearMessages'
-            });
-            
-            // Load each message
-            history.forEach(msg => {
-                this._view!.webview.postMessage({
-                    command: 'addMessage',
+                // Load each message
+                history.forEach((msg) => {
+                  this._view!.webview.postMessage({
+                    command: "addMessage",
                     role: msg.role,
                     content: msg.content,
-                    timestamp: msg.timestamp.toISOString()
+                    timestamp: msg.timestamp.toISOString(),
+                  });
                 });
-            });
+              }
+            }, 300);
+          }
         }
+      });
     }
 
-    private _getHtmlForWebview(webview: vscode.Webview) {
-        // Get the icon path
-        const iconPath = vscode.Uri.joinPath(this._extensionUri, 'TheAlmighty-icon.png');
-        const iconUri = webview.asWebviewUri(iconPath);
+    // Handle messages from the webview
+    const messageHandler = webviewView.webview.onDidReceiveMessage(
+      async (message) => {
+        switch (message.command) {
+          case "ready":
+            // Webview is ready, load history and sessions
+            this._loadConversationHistory();
+            this._handleGetSessions();
+            break;
+          case "sendMessage":
+            await this._handleMessage(message.text);
+            break;
+          case "checkIn":
+            await this._handleCheckIn();
+            break;
+          case "clearHistory":
+            this._handleClearHistory();
+            break;
+          case "openSettings":
+            this._handleOpenSettings();
+            break;
+          case "createNewSession":
+            this._handleCreateNewSession();
+            break;
+          case "switchSession":
+            this._handleSwitchSession(message.sessionId);
+            break;
+          case "deleteSession":
+            this._handleDeleteSession(message.sessionId);
+            break;
+          case "updateSessionTitle":
+            this._handleUpdateSessionTitle(message.sessionId, message.title);
+            break;
+          case "getSessions":
+            this._handleGetSessions();
+            break;
+        }
+      }
+    );
 
-        // Get configuration
-        const config = vscode.workspace.getConfiguration('thealmighty');
-        const fontSize = config.get<number>('fontSize', 13);
-        const backgroundColor = config.get<string>('backgroundColor', '#1e1e1e');
-        const textColor = config.get<string>('textColor', '#d4d4d4');
-        const borderColor = config.get<string>('borderColor', '#3e3e3e');
-        const userMessageColor = config.get<string>('userMessageColor', '#2d2d2d');
-        const assistantMessageColor = config.get<string>('assistantMessageColor', '#252526');
-        const inputColor = config.get<string>('inputColor', '#252526');
-        const iconColorsEnabled = config.get<boolean>('iconColorsEnabled', false);
-        const iconColor = config.get<string>('iconColor', '#ffffff');
-        
-        // Icon color: use custom icon color when colors disabled (white mode), otherwise use text color
-        const effectiveIconColor = iconColorsEnabled ? textColor : iconColor;
+    // Store the message handler disposable
+    this._disposables.push(messageHandler);
+  }
 
-        return `<!DOCTYPE html>
+  private async _handleMessage(userMessage: string) {
+    if (!userMessage.trim() || !this._view) {
+      return;
+    }
+
+    // Add user message to UI
+    this._view.webview.postMessage({
+      command: "addMessage",
+      role: "user",
+      content: userMessage,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Get response from agent
+    const agent = TheAlmightyAgent.getInstance();
+    const response = await agent.processMessage(userMessage);
+
+    // Add response to UI
+    this._view.webview.postMessage({
+      command: "addMessage",
+      role: "assistant",
+      content: response,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Update sessions list (in case title changed)
+    this._handleGetSessions();
+  }
+
+  private async _handleCheckIn() {
+    if (!this._view) {
+      return;
+    }
+
+    const agent = TheAlmightyAgent.getInstance();
+    const response = await agent.generateCheckIn();
+
+    this._view.webview.postMessage({
+      command: "addMessage",
+      role: "assistant",
+      content: response,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  private _handleClearHistory() {
+    if (!this._view) {
+      return;
+    }
+
+    const agent = TheAlmightyAgent.getInstance();
+    agent.clearConversationHistory();
+
+    this._view.webview.postMessage({
+      command: "clearMessages",
+    });
+  }
+
+  private _handleOpenSettings() {
+    vscode.commands.executeCommand(
+      "workbench.action.openSettings",
+      "@thealmighty.deepseekApiKey"
+    );
+  }
+
+  private _handleCreateNewSession() {
+    if (!this._view) {
+      return;
+    }
+
+    const agent = TheAlmightyAgent.getInstance();
+    const sessionId = agent.createNewSession("New Chat");
+
+    this._view.webview.postMessage({
+      command: "clearMessages",
+    });
+
+    this._handleGetSessions();
+  }
+
+  private _handleSwitchSession(sessionId: string) {
+    if (!this._view) {
+      return;
+    }
+
+    const agent = TheAlmightyAgent.getInstance();
+    if (agent.switchSession(sessionId)) {
+      this._loadConversationHistory();
+      this._view.webview.postMessage({
+        command: "sessionSwitched",
+        sessionId: sessionId,
+      });
+    }
+  }
+
+  private _handleDeleteSession(sessionId: string) {
+    if (!this._view) {
+      return;
+    }
+
+    const agent = TheAlmightyAgent.getInstance();
+    if (agent.deleteSession(sessionId)) {
+      this._loadConversationHistory();
+      this._handleGetSessions();
+    }
+  }
+
+  private _handleUpdateSessionTitle(sessionId: string, title: string) {
+    if (!this._view) {
+      return;
+    }
+
+    const agent = TheAlmightyAgent.getInstance();
+    agent.updateSessionTitle(sessionId, title);
+    this._handleGetSessions();
+  }
+
+  private _handleGetSessions() {
+    if (!this._view) {
+      return;
+    }
+
+    const agent = TheAlmightyAgent.getInstance();
+    const sessions = agent.getSessions();
+    const currentSessionId = agent.getCurrentSessionId();
+
+    this._view.webview.postMessage({
+      command: "sessionsUpdated",
+      sessions: sessions.map((s) => ({
+        id: s.id,
+        title: s.title,
+        createdAt: s.createdAt.toISOString(),
+        updatedAt: s.updatedAt.toISOString(),
+      })),
+      currentSessionId: currentSessionId,
+    });
+  }
+
+  private _loadConversationHistory() {
+    if (!this._view) {
+      return;
+    }
+
+    const agent = TheAlmightyAgent.getInstance();
+    const history = agent.getConversationHistory();
+
+    if (history.length > 0) {
+      // Remove welcome message
+      this._view.webview.postMessage({
+        command: "clearMessages",
+      });
+
+      // Load each message
+      history.forEach((msg) => {
+        this._view!.webview.postMessage({
+          command: "addMessage",
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp.toISOString(),
+        });
+      });
+    }
+  }
+
+  private _getHtmlForWebview(webview: vscode.Webview) {
+    // Get the icon path
+    const iconPath = vscode.Uri.joinPath(
+      this._extensionUri,
+      "TheAlmighty-icon.png"
+    );
+    const iconUri = webview.asWebviewUri(iconPath);
+
+    // Get configuration
+    const config = vscode.workspace.getConfiguration("thealmighty");
+    const fontSize = config.get<number>("fontSize", 13);
+    const backgroundColor = config.get<string>("backgroundColor", "#1e1e1e");
+    const textColor = config.get<string>("textColor", "#d4d4d4");
+    const borderColor = config.get<string>("borderColor", "#3e3e3e");
+    const userMessageColor = config.get<string>("userMessageColor", "#2d2d2d");
+    const assistantMessageColor = config.get<string>(
+      "assistantMessageColor",
+      "#252526"
+    );
+    const inputColor = config.get<string>("inputColor", "#252526");
+    const iconColorsEnabled = config.get<boolean>("iconColorsEnabled", false);
+    const iconColor = config.get<string>("iconColor", "#ffffff");
+
+    // Icon color: use custom icon color when colors disabled (white mode), otherwise use text color
+    const effectiveIconColor = iconColorsEnabled ? textColor : iconColor;
+
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1050,18 +1061,21 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     </script>
 </body>
 </html>`;
-    }
+  }
 }
 
 export class TheAlmightyPanel {
-    public static register(context: vscode.ExtensionContext): vscode.Disposable {
-        const provider = new TheAlmightyPanelProvider(context.extensionUri);
-        return vscode.window.registerWebviewViewProvider(TheAlmightyPanelProvider.viewType, provider);
-    }
+  public static register(context: vscode.ExtensionContext): vscode.Disposable {
+    const provider = new TheAlmightyPanelProvider(context.extensionUri);
+    return vscode.window.registerWebviewViewProvider(
+      TheAlmightyPanelProvider.viewType,
+      provider
+    );
+  }
 
-    public static createOrShow(extensionUri: vscode.Uri) {
-        // The view will be automatically shown when the view container is clicked
-        // This command is kept for compatibility but the view is managed by VS Code
-        vscode.commands.executeCommand('thealmighty-container.focus');
-    }
+  public static createOrShow(extensionUri: vscode.Uri) {
+    // The view will be automatically shown when the view container is clicked
+    // This command is kept for compatibility but the view is managed by VS Code
+    vscode.commands.executeCommand("thealmighty-container.focus");
+  }
 }
