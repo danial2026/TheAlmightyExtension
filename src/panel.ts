@@ -732,6 +732,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             width: 16px;
             height: 16px;
             fill: ${effectiveIconColor};
+            pointer-events: none;
         }
     </style>
 </head>
@@ -953,7 +954,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 const content = document.createElement('div');
                 content.className = 'history-item-content';
                 content.onclick = (e) => {
-                    // Don't switch if clicking the delete button
+                    // Don't switch if clicking the delete button or any of its children
                     if (e.target.closest('.history-item-delete')) {
                         return;
                     }
@@ -974,14 +975,14 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 deleteBtn.type = 'button';
                 deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
                 
-                // Use addEventListener for better event handling
+                // Handle clicks on button - use capture phase to handle before bubbling
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     e.stopImmediatePropagation();
                     deleteSessionFromHistory(session.id, e);
                     return false;
-                });
+                }, true);
                 
                 const meta = document.createElement('div');
                 meta.className = 'history-item-meta';
