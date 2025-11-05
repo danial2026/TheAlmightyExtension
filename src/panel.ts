@@ -596,130 +596,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             opacity: 0.7;
         }
 
-        .tabs-container {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            overflow-x: auto;
-            overflow-y: hidden;
-            flex: 1;
-            min-width: 0;
-            padding: 0 8px;
-        }
-
-        .tabs-container::-webkit-scrollbar {
-            height: 4px;
-        }
-
-        .tabs-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .tabs-container::-webkit-scrollbar-thumb {
-            background: ${borderColor};
-            border-radius: 2px;
-        }
-
-        .tabs-container::-webkit-scrollbar-thumb:hover {
-            background: ${textColor};
-            opacity: 0.5;
-        }
-
-        .session-tab {
-            padding: 8px 12px;
-            cursor: pointer;
-            border: 1px solid transparent;
-            border-radius: 4px 4px 0 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 100px;
-            max-width: 200px;
-            background: transparent;
-            color: ${textColor};
-            opacity: 0.6;
-            font-size: ${fontSize}px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .session-tab:hover {
-            opacity: 0.8;
-            background: ${inputColor};
-        }
-
-        .session-tab.active {
-            opacity: 1;
-            background: ${backgroundColor};
-            border-color: ${borderColor};
-            border-bottom-color: transparent;
-        }
-
-        .session-tab-title {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .session-tab-close {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            width: 16px;
-            height: 16px;
-            border-radius: 2px;
-            background: transparent;
-            border: none;
-            color: ${textColor};
-            cursor: pointer;
-            padding: 0;
-            flex-shrink: 0;
-        }
-
-        .session-tab:hover .session-tab-close {
-            display: flex;
-        }
-
-        .session-tab-close:hover {
-            background: ${borderColor};
-        }
-
-        .session-tab-close svg {
-            width: 12px;
-            height: 12px;
-            fill: ${effectiveIconColor};
-        }
-
-        .new-tab-btn {
-            padding: 8px 12px;
-            cursor: pointer;
-            border: 1px solid transparent;
-            border-radius: 4px 4px 0 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-            color: ${textColor};
-            font-size: ${fontSize + 2}px;
-            width: 32px;
-            height: 32px;
-            flex-shrink: 0;
-        }
-
-        .new-tab-btn:hover {
-            background: ${inputColor};
-        }
-
-        .new-tab-btn svg {
-            width: 16px;
-            height: 16px;
-            fill: ${effectiveIconColor};
-        }
-
         .header-icon-large {
             width: 100%;
             height: auto;
@@ -758,15 +634,23 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
         .history-item {
             padding: 12px 15px;
-            cursor: pointer;
             border-bottom: 1px solid ${borderColor};
             display: flex;
             flex-direction: column;
             gap: 4px;
+            position: relative;
         }
 
         .history-item:hover {
             background: ${inputColor};
+        }
+
+        .history-item-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            cursor: pointer;
         }
 
         .history-item-title {
@@ -776,6 +660,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            flex: 1;
         }
 
         .history-item-meta {
@@ -783,20 +668,43 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             color: ${textColor};
             opacity: 0.6;
         }
+
+        .history-item-delete {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background: transparent;
+            border: none;
+            color: ${textColor};
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
+            opacity: 0.6;
+        }
+
+        .history-item:hover .history-item-delete {
+            display: flex;
+        }
+
+        .history-item-delete:hover {
+            background: ${borderColor};
+            opacity: 1;
+        }
+
+        .history-item-delete svg {
+            width: 16px;
+            height: 16px;
+            fill: ${effectiveIconColor};
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <img src="${iconUri}" alt="TheAlmighty" class="header-icon" />
-        <div class="tabs-container" id="tabsContainer">
-            <button class="new-tab-btn" id="newTabBtn" onclick="createNewSession()" title="New Chat">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-            </button>
-            <div id="tabsList"></div>
-        </div>
+        <div class="header-title">The Seraphic Construct</div>
         <div class="header-actions" style="position: relative;">
             <button class="btn" id="historyBtn" title="History">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -814,11 +722,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <circle cx="12" cy="12" r="10"></circle>
                     <circle cx="12" cy="12" r="4"></circle>
-                </svg>
-            </button>
-            <button class="btn" id="clearHistoryBtn" title="Clear History">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                 </svg>
             </button>
             <div class="history-dropdown" id="historyDropdown">
@@ -883,11 +786,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             checkInBtn.addEventListener('click', checkIn);
         }
 
-        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-        if (clearHistoryBtn) {
-            clearHistoryBtn.addEventListener('click', clearHistory);
-        }
-
         const historyBtn = document.getElementById('historyBtn');
         const historyDropdown = document.getElementById('historyDropdown');
         const historyList = document.getElementById('historyList');
@@ -899,7 +797,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         // Session management
         let sessions = [];
         let currentSessionId = null;
-        const tabsList = document.getElementById('tabsList');
         let headerIconLarge = chatContainer.querySelector('.header-icon-large');
 
         // Handle messages from extension
@@ -916,12 +813,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 case 'sessionsUpdated':
                     sessions = message.sessions || [];
                     currentSessionId = message.currentSessionId;
-                    updateTabsList();
                     updateHistoryList();
                     break;
                 case 'sessionSwitched':
                     currentSessionId = message.sessionId;
-                    updateTabsList();
                     updateHistoryList();
                     break;
             }
@@ -942,45 +837,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             }
         }
 
-        function updateSessionTitle(sessionId, event) {
+        function deleteSessionFromHistory(sessionId, event) {
             event.stopPropagation();
-            const session = sessions.find(s => s.id === sessionId);
-            if (!session) return;
-            
-            const newTitle = prompt('Enter new title:', session.title);
-            if (newTitle && newTitle.trim()) {
-                vscode.postMessage({ command: 'updateSessionTitle', sessionId: sessionId, title: newTitle.trim() });
+            if (confirm('Delete this chat session?')) {
+                vscode.postMessage({ command: 'deleteSession', sessionId: sessionId });
             }
-        }
-
-        function updateTabsList() {
-            if (!tabsList) return;
-            
-            tabsList.innerHTML = '';
-            
-            // Sort sessions by updatedAt (most recent first)
-            const sortedSessions = [...sessions].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-            
-            sortedSessions.forEach(session => {
-                const tab = document.createElement('div');
-                tab.className = \`session-tab \${session.id === currentSessionId ? 'active' : ''}\`;
-                tab.onclick = () => switchSession(session.id);
-                
-                const title = document.createElement('div');
-                title.className = 'session-tab-title';
-                title.textContent = session.title;
-                title.title = session.title;
-                
-                const closeBtn = document.createElement('button');
-                closeBtn.className = 'session-tab-close';
-                closeBtn.title = 'Close';
-                closeBtn.onclick = (e) => deleteSession(session.id, e);
-                closeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-                
-                tab.appendChild(title);
-                tab.appendChild(closeBtn);
-                tabsList.appendChild(tab);
-            });
         }
 
         function addMessage(role, content, timestamp) {
@@ -1040,7 +901,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             sortedSessions.forEach(session => {
                 const item = document.createElement('div');
                 item.className = 'history-item';
-                item.onclick = () => {
+                
+                const content = document.createElement('div');
+                content.className = 'history-item-content';
+                content.onclick = () => {
                     switchSession(session.id);
                     if (historyDropdown) {
                         historyDropdown.classList.remove('open');
@@ -1052,6 +916,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 title.textContent = session.title;
                 title.title = session.title;
                 
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'history-item-delete';
+                deleteBtn.title = 'Delete session';
+                deleteBtn.onclick = (e) => deleteSessionFromHistory(session.id, e);
+                deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+                
                 const meta = document.createElement('div');
                 meta.className = 'history-item-meta';
                 const messageCount = session.messages ? session.messages.length : 0;
@@ -1059,7 +929,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 meta.textContent = \`\${messageCount} messages • \${dateStr}\`;
                 
-                item.appendChild(title);
+                content.appendChild(title);
+                content.appendChild(deleteBtn);
+                item.appendChild(content);
                 item.appendChild(meta);
                 historyList.appendChild(item);
             });
@@ -1120,13 +992,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             });
         }
 
-        function clearHistory() {
-            if (confirm('Clear all conversation history?')) {
-                vscode.postMessage({
-                    command: 'clearHistory'
-                });
-            }
-        }
 
         function openSettings() {
             console.log('openSettings called');
