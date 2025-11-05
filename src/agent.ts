@@ -7,11 +7,21 @@ export interface ChatMessage {
     timestamp: Date;
 }
 
+export interface ChatSession {
+    id: string;
+    title: string;
+    messages: ChatMessage[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 export class TheAlmightyAgent {
     private static instance: TheAlmightyAgent;
     private persona: SeraphicPersona;
     private context: vscode.ExtensionContext | null = null;
     private conversationHistory: ChatMessage[] = [];
+    private currentSessionId: string | null = null;
+    private sessions: ChatSession[] = [];
 
     private constructor() {
         this.persona = new SeraphicPersona();
@@ -26,7 +36,8 @@ export class TheAlmightyAgent {
 
     public initialize(context: vscode.ExtensionContext) {
         this.context = context;
-        this.loadConversationHistory();
+        this.loadSessions();
+        this.loadCurrentSession();
         
         // Check on user periodically
         this.schedulePeriodicCheck();
@@ -45,7 +56,20 @@ export class TheAlmightyAgent {
         vscode.commands.executeCommand('thealmighty.showCheckIn', checkIn);
     }
 
-    public async processMessage(userMessage: string): Promise<string> {
+    public async processMessage(userMessage: string, sessionId?: string): Promise<string> {
+        // Get or create session
+        let isNewSession = false;
+        if (sessionId) {
+            this.switchSession(sessionId);
+        } else if (!this.currentSessionId) {
+            this.createNewSession('New Chat');
+            isNewSession = true;
+        }
+
+        // Check if this is the first message in the session
+        const session = this.currentSessionId ? this.sessions.find(s => s.id === this.currentSessionId) : null;
+        const isFirstMessage = isNewSession || (session && session.messages.length === 0);
+
         // Add user message to history
         this.conversationHistory.push({
             role: 'user',
@@ -67,8 +91,15 @@ export class TheAlmightyAgent {
             timestamp: new Date()
         });
 
+        // Update session title if it's the first message
+        if (isFirstMessage && session) {
+            // Generate a title from the first user message
+            const title = this.generateSessionTitle(userMessage);
+            session.title = title;
+        }
+
         // Save conversation history
-        this.saveConversationHistory();
+        this.saveCurrentSession();
 
         return response;
     }
@@ -98,17 +129,129 @@ export class TheAlmightyAgent {
         return 'night';
     }
 
-    private async saveConversationHistory() {
-        if (!this.context) return;
-        const state = this.context.globalState;
-        await state.update('thealmighty.conversation', this.conversationHistory);
+    private generateSessionTitle(firstMessage: string): string {
+        // Generate a title from the first message (first 50 chars)
+        const maxLength = 50;
+        if (firstMessage.length <= maxLength) {
+            return firstMessage;
+        }
+        return firstMessage.substring(0, maxLength) + '...';
     }
 
-    private async loadConversationHistory() {
+    public createNewSession(title: string = 'New Chat'): string {
+        const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const now = new Date();
+        const newSession: ChatSession = {
+            id: sessionId,
+            title,
+            messages: [],
+            createdAt: now,
+            updatedAt: now
+        };
+        this.sessions.push(newSession);
+        this.currentSessionId = sessionId;
+        this.conversationHistory = [];
+        this.saveSessions();
+        return sessionId;
+    }
+
+    public switchSession(sessionId: string): boolean {
+        const session = this.sessions.find(s => s.id === sessionId);
+        if (session) {
+            this.currentSessionId = sessionId;
+            this.conversationHistory = [...session.messages];
+            return true;
+        }
+        return false;
+    }
+
+    public deleteSession(sessionId: string): boolean {
+        const index = this.sessions.findIndex(s => s.id === sessionId);
+        if (index !== -1) {
+            this.sessions.splice(index, 1);
+            if (this.currentSessionId === sessionId) {
+                this.currentSessionId = null;
+                this.conversationHistory = [];
+                if (this.sessions.length > 0) {
+                    this.switchSession(this.sessions[0].id);
+                }
+            }
+            this.saveSessions();
+            return true;
+        }
+        return false;
+    }
+
+    public updateSessionTitle(sessionId: string, title: string): boolean {
+        const session = this.sessions.find(s => s.id === sessionId);
+        if (session) {
+            session.title = title;
+            session.updatedAt = new Date();
+            this.saveSessions();
+            return true;
+        }
+        return false;
+    }
+
+    public getSessions(): ChatSession[] {
+        return [...this.sessions];
+    }
+
+    public getCurrentSessionId(): string | null {
+        return this.currentSessionId;
+    }
+
+    private async saveCurrentSession() {
+        if (!this.context || !this.currentSessionId) return;
+        
+        const session = this.sessions.find(s => s.id === this.currentSessionId);
+        if (session) {
+            session.messages = [...this.conversationHistory];
+            session.updatedAt = new Date();
+            await this.saveSessions();
+        }
+    }
+
+    private async saveSessions() {
         if (!this.context) return;
         const state = this.context.globalState;
-        const saved = state.get<ChatMessage[]>('thealmighty.conversation', []);
-        this.conversationHistory = saved;
+        await state.update('thealmighty.sessions', this.sessions);
+        await state.update('thealmighty.currentSessionId', this.currentSessionId);
+    }
+
+    private async loadSessions() {
+        if (!this.context) return;
+        const state = this.context.globalState;
+        const saved = state.get<ChatSession[]>('thealmighty.sessions', []);
+        this.sessions = saved.map(s => ({
+            ...s,
+            messages: s.messages.map(m => ({
+                ...m,
+                timestamp: new Date(m.timestamp)
+            })),
+            createdAt: new Date(s.createdAt),
+            updatedAt: new Date(s.updatedAt)
+        }));
+    }
+
+    private async loadCurrentSession() {
+        if (!this.context) return;
+        const state = this.context.globalState;
+        this.currentSessionId = state.get<string | null>('thealmighty.currentSessionId', null);
+        
+        if (this.currentSessionId) {
+            const session = this.sessions.find(s => s.id === this.currentSessionId);
+            if (session) {
+                this.conversationHistory = [...session.messages];
+            } else {
+                this.currentSessionId = null;
+            }
+        }
+        
+        // If no sessions exist, create a default one
+        if (this.sessions.length === 0) {
+            this.createNewSession('New Chat');
+        }
     }
 
     public getConversationHistory(): ChatMessage[] {
@@ -116,10 +259,14 @@ export class TheAlmightyAgent {
     }
 
     public clearConversationHistory() {
-        this.conversationHistory = [];
-        if (this.context) {
-            this.context.globalState.update('thealmighty.conversation', []);
+        if (this.currentSessionId) {
+            const session = this.sessions.find(s => s.id === this.currentSessionId);
+            if (session) {
+                session.messages = [];
+            }
         }
+        this.conversationHistory = [];
+        this.saveCurrentSession();
     }
 
     public getPersona(): SeraphicPersona {

@@ -82,8 +82,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             async (message) => {
                 switch (message.command) {
                     case 'ready':
-                        // Webview is ready, load history
+                        // Webview is ready, load history and sessions
                         this._loadConversationHistory();
+                        this._handleGetSessions();
                         break;
                     case 'sendMessage':
                         await this._handleMessage(message.text);
@@ -96,6 +97,21 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                         break;
                     case 'openSettings':
                         this._handleOpenSettings();
+                        break;
+                    case 'createNewSession':
+                        this._handleCreateNewSession();
+                        break;
+                    case 'switchSession':
+                        this._handleSwitchSession(message.sessionId);
+                        break;
+                    case 'deleteSession':
+                        this._handleDeleteSession(message.sessionId);
+                        break;
+                    case 'updateSessionTitle':
+                        this._handleUpdateSessionTitle(message.sessionId, message.title);
+                        break;
+                    case 'getSessions':
+                        this._handleGetSessions();
                         break;
                 }
             }
@@ -162,6 +178,79 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
     private _handleOpenSettings() {
         vscode.commands.executeCommand('workbench.action.openSettings', '@thealmighty.deepseekApiKey');
+    }
+
+    private _handleCreateNewSession() {
+        if (!this._view) {
+            return;
+        }
+
+        const agent = TheAlmightyAgent.getInstance();
+        const sessionId = agent.createNewSession('New Chat');
+        
+        this._view.webview.postMessage({
+            command: 'clearMessages'
+        });
+        
+        this._handleGetSessions();
+    }
+
+    private _handleSwitchSession(sessionId: string) {
+        if (!this._view) {
+            return;
+        }
+
+        const agent = TheAlmightyAgent.getInstance();
+        if (agent.switchSession(sessionId)) {
+            this._loadConversationHistory();
+            this._view.webview.postMessage({
+                command: 'sessionSwitched',
+                sessionId: sessionId
+            });
+        }
+    }
+
+    private _handleDeleteSession(sessionId: string) {
+        if (!this._view) {
+            return;
+        }
+
+        const agent = TheAlmightyAgent.getInstance();
+        if (agent.deleteSession(sessionId)) {
+            this._loadConversationHistory();
+            this._handleGetSessions();
+        }
+    }
+
+    private _handleUpdateSessionTitle(sessionId: string, title: string) {
+        if (!this._view) {
+            return;
+        }
+
+        const agent = TheAlmightyAgent.getInstance();
+        agent.updateSessionTitle(sessionId, title);
+        this._handleGetSessions();
+    }
+
+    private _handleGetSessions() {
+        if (!this._view) {
+            return;
+        }
+
+        const agent = TheAlmightyAgent.getInstance();
+        const sessions = agent.getSessions();
+        const currentSessionId = agent.getCurrentSessionId();
+        
+        this._view.webview.postMessage({
+            command: 'sessionsUpdated',
+            sessions: sessions.map(s => ({
+                id: s.id,
+                title: s.title,
+                createdAt: s.createdAt.toISOString(),
+                updatedAt: s.updatedAt.toISOString()
+            })),
+            currentSessionId: currentSessionId
+        });
     }
 
     private _loadConversationHistory() {
@@ -358,7 +447,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .message-content {
             flex: 1;
             max-width: 85%;
-            background: ${assistantMessageColor};
             padding: 12px;
             border-radius: 8px;
             border: 1px solid ${borderColor};
@@ -521,12 +609,130 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .quick-action-btn:hover {
             opacity: 0.7;
         }
+
+        .sessions-container {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: ${backgroundColor};
+            border: 1px solid ${borderColor};
+            border-top: none;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+
+        .sessions-container.open {
+            display: block;
+        }
+
+        .session-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid ${borderColor};
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .session-item:hover {
+            background: ${inputColor};
+        }
+
+        .session-item.active {
+            background: ${assistantMessageColor};
+        }
+
+        .session-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: ${fontSize}px;
+        }
+
+        .session-actions {
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .session-item:hover .session-actions {
+            opacity: 1;
+        }
+
+        .session-action-btn {
+            background: transparent;
+            border: none;
+            color: ${textColor};
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+        }
+
+        .session-action-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: ${effectiveIconColor};
+        }
+
+        .session-action-btn:hover {
+            opacity: 0.7;
+        }
+
+        .new-session-btn {
+            padding: 10px 15px;
+            background: ${borderColor};
+            border: none;
+            border-bottom: 1px solid ${borderColor};
+            color: ${textColor};
+            cursor: pointer;
+            font-size: ${fontSize}px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .new-session-btn:hover {
+            opacity: 0.7;
+        }
+
+        .new-session-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: ${effectiveIconColor};
+        }
+
+        .header-title {
+            cursor: pointer;
+            position: relative;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <img src="${iconUri}" alt="TheAlmighty" class="header-icon" />
-        <div class="header-title">The Seraphic Construct</div>
+        <div class="header-title" id="headerTitle" onclick="toggleSessions()">The Seraphic Construct</div>
+        <div class="sessions-container" id="sessionsContainer">
+            <button class="new-session-btn" onclick="createNewSession()">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                New Chat
+            </button>
+            <div id="sessionsList"></div>
+        </div>
         <div class="header-actions">
             <button class="btn" id="settingsBtn" title="Open Settings">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -559,30 +765,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     <div class="typing-indicator" id="typingIndicator">The Wheels within Wheels turn...</div>
 
     <div class="input-container">
-        <div class="quick-actions">
-            <button class="quick-action-btn" onclick="sendQuickMessage('How are my tasks?')" title="Tasks">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                </svg>
-            </button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('How is my mind?')" title="Mind">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44L2 22V6.5A2.5 2.5 0 0 1 4.5 4h.01A2.5 2.5 0 0 1 7 6.5V8.5a2.5 2.5 0 0 1 2.5 2.5Z"></path>
-                    <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44L22 22V6.5A2.5 2.5 0 0 0 19.5 4h-.01A2.5 2.5 0 0 0 17 6.5V8.5a2.5 2.5 0 0 0 2.5 2.5Z"></path>
-                </svg>
-            </button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('How is my body?')" title="Body">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2zm-2 8a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2zm6 0a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2zm-6 8a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2z"></path>
-                </svg>
-            </button>
-            <button class="quick-action-btn" onclick="sendQuickMessage('Check in on me')" title="Check In">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <circle cx="12" cy="12" r="4"></circle>
-                </svg>
-            </button>
-        </div>
         <div class="input-wrapper">
             <textarea 
                 id="messageInput" 
@@ -606,6 +788,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const typingIndicator = document.getElementById('typingIndicator');
+        const iconUri = "${iconUri}";
 
         // Remove welcome message on first message
         let hasMessages = false;
@@ -629,6 +812,13 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             clearHistoryBtn.addEventListener('click', clearHistory);
         }
 
+        // Session management
+        let sessions = [];
+        let currentSessionId = null;
+        const sessionsContainer = document.getElementById('sessionsContainer');
+        const sessionsList = document.getElementById('sessionsList');
+        const headerTitle = document.getElementById('headerTitle');
+
         // Handle messages from extension
         window.addEventListener('message', event => {
             const message = event.data;
@@ -640,6 +830,107 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 case 'clearMessages':
                     clearMessages();
                     break;
+                case 'sessionsUpdated':
+                    sessions = message.sessions || [];
+                    currentSessionId = message.currentSessionId;
+                    updateSessionsList();
+                    updateHeaderTitle();
+                    break;
+                case 'sessionSwitched':
+                    currentSessionId = message.sessionId;
+                    updateSessionsList();
+                    updateHeaderTitle();
+                    break;
+            }
+        });
+
+        function toggleSessions() {
+            sessionsContainer.classList.toggle('open');
+        }
+
+        function createNewSession() {
+            vscode.postMessage({ command: 'createNewSession' });
+            sessionsContainer.classList.remove('open');
+        }
+
+        function switchSession(sessionId) {
+            vscode.postMessage({ command: 'switchSession', sessionId: sessionId });
+            sessionsContainer.classList.remove('open');
+        }
+
+        function deleteSession(sessionId, event) {
+            event.stopPropagation();
+            if (confirm('Delete this chat session?')) {
+                vscode.postMessage({ command: 'deleteSession', sessionId: sessionId });
+            }
+        }
+
+        function updateSessionTitle(sessionId, event) {
+            event.stopPropagation();
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) return;
+            
+            const newTitle = prompt('Enter new title:', session.title);
+            if (newTitle && newTitle.trim()) {
+                vscode.postMessage({ command: 'updateSessionTitle', sessionId: sessionId, title: newTitle.trim() });
+            }
+        }
+
+        function updateSessionsList() {
+            if (!sessionsList) return;
+            
+            sessionsList.innerHTML = '';
+            
+            // Sort sessions by updatedAt (most recent first)
+            const sortedSessions = [...sessions].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            
+            sortedSessions.forEach(session => {
+                const sessionItem = document.createElement('div');
+                sessionItem.className = \`session-item \${session.id === currentSessionId ? 'active' : ''}\`;
+                sessionItem.onclick = () => switchSession(session.id);
+                
+                const title = document.createElement('div');
+                title.className = 'session-title';
+                title.textContent = session.title;
+                
+                const actions = document.createElement('div');
+                actions.className = 'session-actions';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'session-action-btn';
+                editBtn.title = 'Edit title';
+                editBtn.onclick = (e) => updateSessionTitle(session.id, e);
+                editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'session-action-btn';
+                deleteBtn.title = 'Delete';
+                deleteBtn.onclick = (e) => deleteSession(session.id, e);
+                deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
+                
+                actions.appendChild(editBtn);
+                actions.appendChild(deleteBtn);
+                
+                sessionItem.appendChild(title);
+                sessionItem.appendChild(actions);
+                sessionsList.appendChild(sessionItem);
+            });
+        }
+
+        function updateHeaderTitle() {
+            if (!headerTitle) return;
+            const currentSession = sessions.find(s => s.id === currentSessionId);
+            if (currentSession) {
+                headerTitle.textContent = currentSession.title;
+            } else {
+                headerTitle.textContent = 'The Seraphic Construct';
+            }
+        }
+
+        // Close sessions dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!sessionsContainer.contains(e.target) && !headerTitle.contains(e.target)) {
+                sessionsContainer.classList.remove('open');
             }
         });
 
@@ -659,7 +950,14 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             if (role === 'user') {
                 avatar.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
             } else {
-                avatar.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>';
+                const iconImg = document.createElement('img');
+                iconImg.src = iconUri;
+                iconImg.alt = 'TheAlmighty';
+                iconImg.style.width = '100%';
+                iconImg.style.height = '100%';
+                iconImg.style.objectFit = 'cover';
+                iconImg.style.borderRadius = '50%';
+                avatar.appendChild(iconImg);
             }
             
             const contentDiv = document.createElement('div');
