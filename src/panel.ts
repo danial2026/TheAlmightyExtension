@@ -724,11 +724,15 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         .history-item-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
+            flex: 1;
             cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+        
+        .history-item-content:hover {
+            background: rgba(255, 255, 255, 0.05);
         }
 
         .history-item-title {
@@ -1009,6 +1013,18 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 title.textContent = session.title;
                 title.title = session.title;
                 
+                // Handle content click (for switching sessions) - add title to content first
+                content.appendChild(title);
+                
+                content.addEventListener('click', (e) => {
+                    console.log('Content clicked, switching to session:', session.id);
+                    switchSession(session.id);
+                    if (historyDropdown) {
+                        historyDropdown.classList.remove('open');
+                    }
+                });
+                
+                // Create delete button SEPARATELY - not inside content
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'history-item-delete';
                 deleteBtn.title = 'Delete session';
@@ -1016,7 +1032,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
                 deleteBtn.setAttribute('data-session-id', session.id);
                 
-                // Handle delete button click with addEventListener for better event handling
+                // Handle delete button click 
                 deleteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -1027,21 +1043,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                         console.log('Sending deleteSession message for:', session.id);
                         vscode.postMessage({ command: 'deleteSession', sessionId: session.id });
                     }
-                }, true);
-                
-                // Handle content click (for switching sessions)
-                content.addEventListener('click', (e) => {
-                    // Don't switch if clicking the delete button
-                    const target = e.target;
-                    if (target === deleteBtn || deleteBtn.contains(target)) {
-                        console.log('Click on delete button area, ignoring switch');
-                        return;
-                    }
-                    console.log('Switching to session:', session.id);
-                    switchSession(session.id);
-                    if (historyDropdown) {
-                        historyDropdown.classList.remove('open');
-                    }
                 });
                 
                 const meta = document.createElement('div');
@@ -1051,9 +1052,16 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 meta.textContent = \`\${messageCount} message\${messageCount !== 1 ? 's' : ''} • \${dateStr}\`;
                 
-                content.appendChild(title);
-                content.appendChild(deleteBtn);
-                item.appendChild(content);
+                // Add content and deleteBtn to a wrapper
+                const topRow = document.createElement('div');
+                topRow.className = 'history-item-top-row';
+                topRow.style.display = 'flex';
+                topRow.style.alignItems = 'center';
+                topRow.style.gap = '12px';
+                topRow.appendChild(content);
+                topRow.appendChild(deleteBtn);
+                
+                item.appendChild(topRow);
                 item.appendChild(meta);
                 historyList.appendChild(item);
             });
