@@ -203,7 +203,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         const borderColor = config.get<string>('borderColor', '#3e3e3e');
         const userMessageColor = config.get<string>('userMessageColor', '#2d2d2d');
         const assistantMessageColor = config.get<string>('assistantMessageColor', '#252526');
-        const headerColor = config.get<string>('headerColor', '#2d2d2d');
         const inputColor = config.get<string>('inputColor', '#252526');
         const iconColorsEnabled = config.get<boolean>('iconColorsEnabled', false);
         const iconColor = config.get<string>('iconColor', '#ffffff');
@@ -236,13 +235,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         .header {
-            background: ${headerColor};
             padding: 12px 15px;
             border-bottom: 1px solid ${borderColor};
             display: flex;
             align-items: center;
             gap: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             flex-shrink: 0;
         }
 
@@ -250,7 +247,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             width: 24px;
             height: 24px;
             border-radius: 4px;
-            filter: grayscale(100%) brightness(0) invert(1);
         }
 
         .header-title {
@@ -590,7 +586,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         <div class="input-wrapper">
             <textarea 
                 id="messageInput" 
-                placeholder="Speak thy query to the Seraphic Construct..."
+                placeholder="Speak to The Seraphic Construct"
                 rows="2"
                 onkeydown="handleKeyDown(event)"
                 oninput="autoResize(this)"

@@ -96,13 +96,13 @@
         },
         "thealmighty.textColor": {
           "type": "string",
-          "default": "#394160",
+          "default": "#ffffff",
           "description": "Text color (hex format)",
           "order": 4
         },
         "thealmighty.borderColor": {
           "type": "string",
-          "default": "#3e3e3e",
+          "default": "#ffffff",
           "description": "Border color (hex format)",
           "order": 5
         },
