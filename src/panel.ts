@@ -630,6 +630,37 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             font-weight: 600;
             font-size: ${fontSize}px;
             color: ${textColor};
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .history-new-chat-btn {
+            padding: 6px 12px;
+            background: ${borderColor};
+            border: 1px solid ${borderColor};
+            border-radius: 4px;
+            color: ${textColor};
+            cursor: pointer;
+            font-size: ${fontSize}px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .history-new-chat-btn:hover {
+            opacity: 0.7;
+        }
+
+        .history-new-chat-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: ${effectiveIconColor};
+            stroke: ${effectiveIconColor};
         }
 
         .history-item {
@@ -727,7 +758,16 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 </svg>
             </button>
             <div class="history-dropdown" id="historyDropdown">
-                <div class="history-header">Chat History</div>
+                <div class="history-header">
+                    <span>Chat History</span>
+                    <button class="history-new-chat-btn" onclick="createNewSession()" title="New Chat">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        New Chat
+                    </button>
+                </div>
                 <div id="historyList"></div>
             </div>
         </div>
@@ -826,6 +866,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
         function createNewSession() {
             vscode.postMessage({ command: 'createNewSession' });
+            if (historyDropdown) {
+                historyDropdown.classList.remove('open');
+            }
         }
 
         function switchSession(sessionId) {
