@@ -683,6 +683,8 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             padding: 0;
             flex-shrink: 0;
             opacity: 0.6;
+            pointer-events: auto;
+            z-index: 10;
         }
 
         .history-item:hover .history-item-delete {
@@ -838,7 +840,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         function deleteSessionFromHistory(sessionId, event) {
-            event.stopPropagation();
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
             if (confirm('Delete this chat session?')) {
                 vscode.postMessage({ command: 'deleteSession', sessionId: sessionId });
             }
@@ -904,7 +909,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 
                 const content = document.createElement('div');
                 content.className = 'history-item-content';
-                content.onclick = () => {
+                content.onclick = (e) => {
+                    // Don't switch if clicking the delete button
+                    if (e.target.closest('.history-item-delete')) {
+                        return;
+                    }
                     switchSession(session.id);
                     if (historyDropdown) {
                         historyDropdown.classList.remove('open');
@@ -919,7 +928,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'history-item-delete';
                 deleteBtn.title = 'Delete session';
-                deleteBtn.onclick = (e) => deleteSessionFromHistory(session.id, e);
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    deleteSessionFromHistory(session.id, e);
+                };
                 deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
                 
                 const meta = document.createElement('div');
