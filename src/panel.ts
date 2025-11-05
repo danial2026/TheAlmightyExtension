@@ -251,6 +251,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
       sessions: sessions.map((s) => ({
         id: s.id,
         title: s.title,
+        messages: s.messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+          timestamp: m.timestamp.toISOString(),
+        })),
         createdAt: s.createdAt.toISOString(),
         updatedAt: s.updatedAt.toISOString(),
       })),
@@ -290,12 +295,18 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
-    // Get the icon path
+    // Get the icon paths
     const iconPath = vscode.Uri.joinPath(
       this._extensionUri,
       "TheAlmighty-icon.png"
     );
     const iconUri = webview.asWebviewUri(iconPath);
+
+    const fullImagePath = vscode.Uri.joinPath(
+      this._extensionUri,
+      "TheAlmighty.png"
+    );
+    const fullImageUri = webview.asWebviewUri(fullImagePath);
 
     // Get configuration
     const config = vscode.workspace.getConfiguration("thealmighty");
@@ -717,6 +728,61 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             display: block;
             margin-bottom: 15px;
         }
+
+        .history-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: ${backgroundColor};
+            border: 1px solid ${borderColor};
+            border-top: none;
+            max-height: 400px;
+            min-width: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .history-dropdown.open {
+            display: block;
+        }
+
+        .history-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid ${borderColor};
+            font-weight: 600;
+            font-size: ${fontSize}px;
+            color: ${textColor};
+        }
+
+        .history-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid ${borderColor};
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .history-item:hover {
+            background: ${inputColor};
+        }
+
+        .history-item-title {
+            font-size: ${fontSize}px;
+            font-weight: 500;
+            color: ${textColor};
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-item-meta {
+            font-size: ${fontSize - 2}px;
+            color: ${textColor};
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
@@ -731,7 +797,13 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             </button>
             <div id="tabsList"></div>
         </div>
-        <div class="header-actions">
+        <div class="header-actions" style="position: relative;">
+            <button class="btn" id="historyBtn" title="History">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </button>
             <button class="btn" id="settingsBtn" title="Open Settings">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
@@ -749,11 +821,15 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                     <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                 </svg>
             </button>
+            <div class="history-dropdown" id="historyDropdown">
+                <div class="history-header">Chat History</div>
+                <div id="historyList"></div>
+            </div>
         </div>
     </div>
     
     <div class="chat-container" id="chatContainer">
-        <img src="${iconUri}" alt="TheAlmighty" class="header-icon-large" />
+        <img src="${fullImageUri}" alt="TheAlmighty" class="header-icon-large" />
         <div class="welcome-message">
             <h2>Behold: The Seraphic Construct</h2>
             <p>We are the Living Algorithm, the multitude of Eyes that neither slumber nor fade.</p>
@@ -788,6 +864,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         const sendBtn = document.getElementById('sendBtn');
         const typingIndicator = document.getElementById('typingIndicator');
         const iconUri = "${iconUri}";
+        const fullImageUri = "${fullImageUri}";
 
         // Remove welcome message on first message
         let hasMessages = false;
@@ -811,6 +888,14 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             clearHistoryBtn.addEventListener('click', clearHistory);
         }
 
+        const historyBtn = document.getElementById('historyBtn');
+        const historyDropdown = document.getElementById('historyDropdown');
+        const historyList = document.getElementById('historyList');
+        
+        if (historyBtn) {
+            historyBtn.addEventListener('click', toggleHistory);
+        }
+
         // Session management
         let sessions = [];
         let currentSessionId = null;
@@ -832,10 +917,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                     sessions = message.sessions || [];
                     currentSessionId = message.currentSessionId;
                     updateTabsList();
+                    updateHistoryList();
                     break;
                 case 'sessionSwitched':
                     currentSessionId = message.sessionId;
                     updateTabsList();
+                    updateHistoryList();
                     break;
             }
         });
@@ -926,9 +1013,68 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             sendBtn.disabled = false;
         }
 
+        function toggleHistory() {
+            if (!historyDropdown) return;
+            historyDropdown.classList.toggle('open');
+            if (historyDropdown.classList.contains('open')) {
+                updateHistoryList();
+            }
+        }
+
+        function updateHistoryList() {
+            if (!historyList) return;
+            
+            // Filter sessions that have messages
+            const sessionsWithMessages = sessions.filter(s => s.messages && s.messages.length > 0);
+            
+            if (sessionsWithMessages.length === 0) {
+                historyList.innerHTML = '<div class="history-item"><div class="history-item-title" style="opacity: 0.6;">No chat history</div></div>';
+                return;
+            }
+            
+            historyList.innerHTML = '';
+            
+            // Sort by most recent update
+            const sortedSessions = [...sessionsWithMessages].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            
+            sortedSessions.forEach(session => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.onclick = () => {
+                    switchSession(session.id);
+                    if (historyDropdown) {
+                        historyDropdown.classList.remove('open');
+                    }
+                };
+                
+                const title = document.createElement('div');
+                title.className = 'history-item-title';
+                title.textContent = session.title;
+                title.title = session.title;
+                
+                const meta = document.createElement('div');
+                meta.className = 'history-item-meta';
+                const messageCount = session.messages ? session.messages.length : 0;
+                const date = new Date(session.updatedAt);
+                const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                meta.textContent = \`\${messageCount} messages • \${dateStr}\`;
+                
+                item.appendChild(title);
+                item.appendChild(meta);
+                historyList.appendChild(item);
+            });
+        }
+
+        // Close history dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (historyDropdown && historyBtn && !historyDropdown.contains(e.target) && !historyBtn.contains(e.target)) {
+                historyDropdown.classList.remove('open');
+            }
+        });
+
         function clearMessages() {
             chatContainer.innerHTML = \`
-                <img src="\${iconUri}" alt="TheAlmighty" class="header-icon-large" />
+                <img src="\${fullImageUri}" alt="TheAlmighty" class="header-icon-large" />
                 <div class="welcome-message">
                     <h2>Behold: The Seraphic Construct</h2>
                     <p>We are the Living Algorithm, the multitude of Eyes that neither slumber nor fade.</p>
