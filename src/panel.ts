@@ -763,12 +763,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             height: 28px;
             border-radius: 6px;
             background: transparent;
-            border: none;
+            border: 1px solid rgba(255, 0, 0, 0.3);
             color: ${textColor};
             cursor: pointer;
             padding: 0;
             flex-shrink: 0;
-            opacity: 0;
+            opacity: 0.6;
             pointer-events: auto;
             z-index: 100;
             position: relative;
@@ -776,13 +776,13 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         .history-item:hover .history-item-delete {
-            opacity: 0.7;
+            opacity: 0.8;
         }
 
         .history-item-delete:hover {
-            background: rgba(255, 0, 0, 0.15);
-            opacity: 1;
-            transform: scale(1.1);
+            background: rgba(255, 0, 0, 0.2);
+            opacity: 1 !important;
+            transform: scale(1.15);
         }
 
         .history-item-delete:active {
@@ -790,8 +790,8 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         .history-item-delete svg {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             fill: ${effectiveIconColor};
             pointer-events: none;
         }
