@@ -414,50 +414,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             }
         }
 
-        .message.user {
-            flex-direction: row-reverse;
-        }
-
-        .message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            object-fit: cover;
-            color: ${textColor};
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .message-avatar svg {
-            width: 20px;
-            height: 20px;
-            fill: ${effectiveIconColor};
-        }
-
-        .message.user .message-avatar {
-            background: ${userMessageColor};
-            border: 1px solid ${borderColor};
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: ${textColor};
-            font-size: ${fontSize - 2}px;
-        }
-
-        .message.assistant .message-avatar {
-            background: ${assistantMessageColor};
-            border: 1px solid ${borderColor};
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
         .message-content {
             flex: 1;
-            max-width: 85%;
+            max-width: 100%;
             padding: 12px;
             border-radius: 8px;
             border: 1px solid ${borderColor};
@@ -466,10 +425,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             word-wrap: break-word;
             font-size: ${fontSize}px;
             color: ${textColor};
+            background: ${assistantMessageColor};
         }
 
         .message.user .message-content {
-            background: ${userMessageColor};
+            background: ${assistantMessageColor};
             color: ${textColor};
             border-color: ${borderColor};
         }
@@ -956,26 +916,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             const messageDiv = document.createElement('div');
             messageDiv.className = \`message \${role}\`;
             
-            const avatar = document.createElement('div');
-            avatar.className = 'message-avatar';
-            if (role === 'user') {
-                avatar.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
-            } else {
-                const iconImg = document.createElement('img');
-                iconImg.src = iconUri;
-                iconImg.alt = 'TheAlmighty';
-                iconImg.style.width = '100%';
-                iconImg.style.height = '100%';
-                iconImg.style.objectFit = 'cover';
-                iconImg.style.borderRadius = '50%';
-                avatar.appendChild(iconImg);
-            }
-            
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
             contentDiv.textContent = content;
             
-            messageDiv.appendChild(avatar);
             messageDiv.appendChild(contentDiv);
             
             chatContainer.appendChild(messageDiv);
