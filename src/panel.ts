@@ -609,51 +609,86 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             position: absolute;
             top: 100%;
             right: 0;
+            margin-top: 4px;
             background: ${backgroundColor};
-            border: 2px solid ${borderColor};
-            border-top: none;
-            max-height: 400px;
-            min-width: 300px;
-            overflow-y: auto;
+            border: 1px solid ${borderColor};
+            border-radius: 8px;
+            max-height: 450px;
+            min-width: 320px;
+            max-width: 400px;
+            overflow: hidden;
             display: none;
             z-index: 1000;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
 
         .history-dropdown.open {
-            display: block;
+            display: flex;
+            flex-direction: column;
         }
 
         .history-header {
-            padding: 12px 15px;
-            border-bottom: 2px solid ${borderColor};
+            padding: 14px 16px;
+            border-bottom: 1px solid ${borderColor};
             font-weight: 600;
-            font-size: ${fontSize}px;
+            font-size: ${fontSize + 1}px;
             color: ${textColor};
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-shrink: 0;
+            background: ${backgroundColor};
+        }
+
+        .history-header span {
+            font-weight: 600;
+        }
+
+        #historyList {
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+        }
+
+        #historyList::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #historyList::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #historyList::-webkit-scrollbar-thumb {
+            background: ${borderColor};
+            border-radius: 3px;
+        }
+
+        #historyList::-webkit-scrollbar-thumb:hover {
+            background: ${textColor};
+            opacity: 0.3;
         }
 
         .history-new-chat-btn {
             padding: 6px 12px;
             background: ${borderColor};
             border: 1px solid ${borderColor};
-            border-radius: 4px;
+            border-radius: 6px;
             color: ${textColor};
             cursor: pointer;
-            font-size: ${fontSize}px;
+            font-size: ${fontSize - 1}px;
             font-weight: 500;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
-            transition: opacity 0.2s;
+            transition: all 0.2s ease;
             flex-shrink: 0;
         }
 
         .history-new-chat-btn:hover {
-            opacity: 0.7;
+            background: ${inputColor};
+            opacity: 1;
+            transform: translateY(-1px);
         }
 
         .history-new-chat-btn svg {
@@ -664,23 +699,31 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         .history-item {
-            padding: 12px 15px;
-            border-bottom: 2px solid ${borderColor};
+            padding: 14px 16px;
+            border-bottom: 1px solid ${borderColor};
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
             position: relative;
+            transition: background 0.2s ease;
+            cursor: pointer;
         }
 
         .history-item:hover {
             background: ${inputColor};
         }
 
+        .history-item.active {
+            background: ${inputColor};
+            border-left: 3px solid ${textColor};
+            padding-left: 13px;
+        }
+
         .history-item-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
+            gap: 12px;
             cursor: pointer;
         }
 
@@ -692,40 +735,54 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             text-overflow: ellipsis;
             white-space: nowrap;
             flex: 1;
+            line-height: 1.4;
+        }
+
+        .history-item.active .history-item-title {
+            font-weight: 600;
         }
 
         .history-item-meta {
             font-size: ${fontSize - 2}px;
             color: ${textColor};
-            opacity: 0.6;
+            opacity: 0.5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .history-item-delete {
-            display: none;
+            display: flex;
             align-items: center;
             justify-content: center;
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
             background: transparent;
             border: none;
             color: ${textColor};
             cursor: pointer;
             padding: 0;
             flex-shrink: 0;
-            opacity: 0.6;
+            opacity: 0;
             pointer-events: auto;
             z-index: 100;
             position: relative;
+            transition: all 0.2s ease;
         }
 
         .history-item:hover .history-item-delete {
-            display: flex;
+            opacity: 0.7;
         }
 
         .history-item-delete:hover {
-            background: ${borderColor};
+            background: rgba(255, 0, 0, 0.15);
             opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .history-item-delete:active {
+            transform: scale(0.95);
         }
 
         .history-item-delete svg {
@@ -876,22 +933,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             vscode.postMessage({ command: 'switchSession', sessionId: sessionId });
         }
 
-        function deleteSession(sessionId, event) {
-            event.stopPropagation();
-            if (confirm('Delete this chat session?')) {
-                vscode.postMessage({ command: 'deleteSession', sessionId: sessionId });
-            }
-        }
-
-        function deleteSessionFromHistory(sessionId, event) {
-            if (event) {
-                event.stopPropagation();
-                event.preventDefault();
-            }
-            if (confirm('Delete this chat session?')) {
-                vscode.postMessage({ command: 'deleteSession', sessionId: sessionId });
-            }
-        }
 
         function addMessage(role, content, timestamp) {
             // Remove welcome message if present
@@ -938,7 +979,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             const sessionsWithMessages = sessions.filter(s => s.messages && s.messages.length > 0);
             
             if (sessionsWithMessages.length === 0) {
-                historyList.innerHTML = '<div class="history-item"><div class="history-item-title" style="opacity: 0.6;">No chat history</div></div>';
+                historyList.innerHTML = \`<div style="padding: 30px 16px; text-align: center; color: ${textColor}; opacity: 0.5; font-size: ${
+      fontSize - 1
+    }px;">No chat history yet</div>\`;
                 return;
             }
             
@@ -950,19 +993,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             sortedSessions.forEach(session => {
                 const item = document.createElement('div');
                 item.className = 'history-item';
+                if (session.id === currentSessionId) {
+                    item.classList.add('active');
+                }
                 
                 const content = document.createElement('div');
                 content.className = 'history-item-content';
-                content.onclick = (e) => {
-                    // Don't switch if clicking the delete button or any of its children
-                    if (e.target.closest('.history-item-delete')) {
-                        return;
-                    }
-                    switchSession(session.id);
-                    if (historyDropdown) {
-                        historyDropdown.classList.remove('open');
-                    }
-                };
                 
                 const title = document.createElement('div');
                 title.className = 'history-item-title';
@@ -975,21 +1011,35 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 deleteBtn.type = 'button';
                 deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
                 
-                // Handle clicks on button - use capture phase to handle before bubbling
-                deleteBtn.addEventListener('click', (e) => {
+                // Handle delete button click - must be before content click handler
+                deleteBtn.onclick = (e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     e.stopImmediatePropagation();
-                    deleteSessionFromHistory(session.id, e);
+                    if (confirm('Delete this chat session?')) {
+                        vscode.postMessage({ command: 'deleteSession', sessionId: session.id });
+                    }
                     return false;
-                }, true);
+                };
+                
+                // Handle content click (for switching sessions)
+                content.onclick = (e) => {
+                    // Don't switch if clicking the delete button
+                    if (e.target === deleteBtn || deleteBtn.contains(e.target)) {
+                        return;
+                    }
+                    switchSession(session.id);
+                    if (historyDropdown) {
+                        historyDropdown.classList.remove('open');
+                    }
+                };
                 
                 const meta = document.createElement('div');
                 meta.className = 'history-item-meta';
                 const messageCount = session.messages ? session.messages.length : 0;
                 const date = new Date(session.updatedAt);
                 const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                meta.textContent = \`\${messageCount} messages • \${dateStr}\`;
+                meta.textContent = \`\${messageCount} message\${messageCount !== 1 ? 's' : ''} • \${dateStr}\`;
                 
                 content.appendChild(title);
                 content.appendChild(deleteBtn);
