@@ -267,7 +267,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     const history = agent.getConversationHistory();
 
     if (history.length > 0) {
-      // Remove welcome message
+      // Remove welcome message and icon
       this._view.webview.postMessage({
         command: "clearMessages",
       });
@@ -280,6 +280,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
           content: msg.content,
           timestamp: msg.timestamp.toISOString(),
         });
+      });
+    } else {
+      // Show welcome message with icon if no history
+      this._view.webview.postMessage({
+        command: "clearMessages",
       });
     }
   }
@@ -580,128 +585,151 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             opacity: 0.7;
         }
 
-        .sessions-container {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: ${backgroundColor};
-            border: 1px solid ${borderColor};
-            border-top: none;
-            max-height: 300px;
-            overflow-y: auto;
-            display: none;
-            z-index: 1000;
-        }
-
-        .sessions-container.open {
-            display: block;
-        }
-
-        .session-item {
-            padding: 10px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid ${borderColor};
+        .tabs-container {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 10px;
+            gap: 4px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            flex: 1;
+            min-width: 0;
+            padding: 0 8px;
         }
 
-        .session-item:hover {
+        .tabs-container::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .tabs-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .tabs-container::-webkit-scrollbar-thumb {
+            background: ${borderColor};
+            border-radius: 2px;
+        }
+
+        .tabs-container::-webkit-scrollbar-thumb:hover {
+            background: ${textColor};
+            opacity: 0.5;
+        }
+
+        .session-tab {
+            padding: 8px 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 100px;
+            max-width: 200px;
+            background: transparent;
+            color: ${textColor};
+            opacity: 0.6;
+            font-size: ${fontSize}px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .session-tab:hover {
+            opacity: 0.8;
             background: ${inputColor};
         }
 
-        .session-item.active {
-            background: ${assistantMessageColor};
+        .session-tab.active {
+            opacity: 1;
+            background: ${backgroundColor};
+            border-color: ${borderColor};
+            border-bottom-color: transparent;
         }
 
-        .session-title {
+        .session-tab-title {
             flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            font-size: ${fontSize}px;
         }
 
-        .session-actions {
-            display: flex;
-            gap: 5px;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .session-item:hover .session-actions {
-            opacity: 1;
-        }
-
-        .session-action-btn {
+        .session-tab-close {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
             background: transparent;
             border: none;
             color: ${textColor};
             cursor: pointer;
-            padding: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
+            padding: 0;
+            flex-shrink: 0;
         }
 
-        .session-action-btn svg {
-            width: 14px;
-            height: 14px;
+        .session-tab:hover .session-tab-close {
+            display: flex;
+        }
+
+        .session-tab-close:hover {
+            background: ${borderColor};
+        }
+
+        .session-tab-close svg {
+            width: 12px;
+            height: 12px;
             fill: ${effectiveIconColor};
         }
 
-        .session-action-btn:hover {
-            opacity: 0.7;
-        }
-
-        .new-session-btn {
-            padding: 10px 15px;
-            background: ${borderColor};
-            border: none;
-            border-bottom: 1px solid ${borderColor};
-            color: ${textColor};
+        .new-tab-btn {
+            padding: 8px 12px;
             cursor: pointer;
-            font-size: ${fontSize}px;
+            border: 1px solid transparent;
+            border-radius: 4px 4px 0 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            width: 100%;
+            background: transparent;
+            color: ${textColor};
+            font-size: ${fontSize + 2}px;
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
         }
 
-        .new-session-btn:hover {
-            opacity: 0.7;
+        .new-tab-btn:hover {
+            background: ${inputColor};
         }
 
-        .new-session-btn svg {
+        .new-tab-btn svg {
             width: 16px;
             height: 16px;
             fill: ${effectiveIconColor};
         }
 
-        .header-title {
-            cursor: pointer;
-            position: relative;
+        .header-icon-large {
+            width: 100%;
+            height: auto;
+            max-height: 200px;
+            object-fit: contain;
+            display: block;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <img src="${iconUri}" alt="TheAlmighty" class="header-icon" />
-        <div class="header-title" id="headerTitle" onclick="toggleSessions()">The Seraphic Construct</div>
-        <div class="sessions-container" id="sessionsContainer">
-            <button class="new-session-btn" onclick="createNewSession()">
+        <div class="tabs-container" id="tabsContainer">
+            <button class="new-tab-btn" id="newTabBtn" onclick="createNewSession()" title="New Chat">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
-                New Chat
             </button>
-            <div id="sessionsList"></div>
+            <div id="tabsList"></div>
         </div>
         <div class="header-actions">
             <button class="btn" id="settingsBtn" title="Open Settings">
@@ -725,6 +753,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     </div>
     
     <div class="chat-container" id="chatContainer">
+        <img src="${iconUri}" alt="TheAlmighty" class="header-icon-large" />
         <div class="welcome-message">
             <h2>Behold: The Seraphic Construct</h2>
             <p>We are the Living Algorithm, the multitude of Eyes that neither slumber nor fade.</p>
@@ -785,9 +814,8 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         // Session management
         let sessions = [];
         let currentSessionId = null;
-        const sessionsContainer = document.getElementById('sessionsContainer');
-        const sessionsList = document.getElementById('sessionsList');
-        const headerTitle = document.getElementById('headerTitle');
+        const tabsList = document.getElementById('tabsList');
+        let headerIconLarge = chatContainer.querySelector('.header-icon-large');
 
         // Handle messages from extension
         window.addEventListener('message', event => {
@@ -803,29 +831,21 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 case 'sessionsUpdated':
                     sessions = message.sessions || [];
                     currentSessionId = message.currentSessionId;
-                    updateSessionsList();
-                    updateHeaderTitle();
+                    updateTabsList();
                     break;
                 case 'sessionSwitched':
                     currentSessionId = message.sessionId;
-                    updateSessionsList();
-                    updateHeaderTitle();
+                    updateTabsList();
                     break;
             }
         });
 
-        function toggleSessions() {
-            sessionsContainer.classList.toggle('open');
-        }
-
         function createNewSession() {
             vscode.postMessage({ command: 'createNewSession' });
-            sessionsContainer.classList.remove('open');
         }
 
         function switchSession(sessionId) {
             vscode.postMessage({ command: 'switchSession', sessionId: sessionId });
-            sessionsContainer.classList.remove('open');
         }
 
         function deleteSession(sessionId, event) {
@@ -846,63 +866,35 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             }
         }
 
-        function updateSessionsList() {
-            if (!sessionsList) return;
+        function updateTabsList() {
+            if (!tabsList) return;
             
-            sessionsList.innerHTML = '';
+            tabsList.innerHTML = '';
             
             // Sort sessions by updatedAt (most recent first)
             const sortedSessions = [...sessions].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
             
             sortedSessions.forEach(session => {
-                const sessionItem = document.createElement('div');
-                sessionItem.className = \`session-item \${session.id === currentSessionId ? 'active' : ''}\`;
-                sessionItem.onclick = () => switchSession(session.id);
+                const tab = document.createElement('div');
+                tab.className = \`session-tab \${session.id === currentSessionId ? 'active' : ''}\`;
+                tab.onclick = () => switchSession(session.id);
                 
                 const title = document.createElement('div');
-                title.className = 'session-title';
+                title.className = 'session-tab-title';
                 title.textContent = session.title;
+                title.title = session.title;
                 
-                const actions = document.createElement('div');
-                actions.className = 'session-actions';
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'session-tab-close';
+                closeBtn.title = 'Close';
+                closeBtn.onclick = (e) => deleteSession(session.id, e);
+                closeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
                 
-                const editBtn = document.createElement('button');
-                editBtn.className = 'session-action-btn';
-                editBtn.title = 'Edit title';
-                editBtn.onclick = (e) => updateSessionTitle(session.id, e);
-                editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'session-action-btn';
-                deleteBtn.title = 'Delete';
-                deleteBtn.onclick = (e) => deleteSession(session.id, e);
-                deleteBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>';
-                
-                actions.appendChild(editBtn);
-                actions.appendChild(deleteBtn);
-                
-                sessionItem.appendChild(title);
-                sessionItem.appendChild(actions);
-                sessionsList.appendChild(sessionItem);
+                tab.appendChild(title);
+                tab.appendChild(closeBtn);
+                tabsList.appendChild(tab);
             });
         }
-
-        function updateHeaderTitle() {
-            if (!headerTitle) return;
-            const currentSession = sessions.find(s => s.id === currentSessionId);
-            if (currentSession) {
-                headerTitle.textContent = currentSession.title;
-            } else {
-                headerTitle.textContent = 'The Seraphic Construct';
-            }
-        }
-
-        // Close sessions dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!sessionsContainer.contains(e.target) && !headerTitle.contains(e.target)) {
-                sessionsContainer.classList.remove('open');
-            }
-        });
 
         function addMessage(role, content, timestamp) {
             // Remove welcome message if present
@@ -910,6 +902,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             if (welcomeMsg) {
                 welcomeMsg.remove();
             }
+            
+            // Hide header icon when messages are present
+            if (headerIconLarge) {
+                headerIconLarge.style.display = 'none';
+            }
+            
             hasMessages = true;
 
             const messageDiv = document.createElement('div');
@@ -930,6 +928,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
         function clearMessages() {
             chatContainer.innerHTML = \`
+                <img src="\${iconUri}" alt="TheAlmighty" class="header-icon-large" />
                 <div class="welcome-message">
                     <h2>Behold: The Seraphic Construct</h2>
                     <p>We are the Living Algorithm, the multitude of Eyes that neither slumber nor fade.</p>
@@ -937,6 +936,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 </div>
             \`;
             hasMessages = false;
+            
+            // Update header icon reference
+            headerIconLarge = chatContainer.querySelector('.header-icon-large');
         }
 
         function sendMessage() {
