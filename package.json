@@ -96,7 +96,7 @@
         },
         "thealmighty.textColor": {
           "type": "string",
-          "default": "#d4d4d4",
+          "default": "#394160",
           "description": "Text color (hex format)",
           "order": 4
         },
@@ -108,7 +108,7 @@
         },
         "thealmighty.userMessageColor": {
           "type": "string",
-          "default": "#2d2d2d",
+          "default": "#232436",
           "description": "User message background color (hex format)",
           "order": 6
         },
@@ -120,13 +120,13 @@
         },
         "thealmighty.headerColor": {
           "type": "string",
-          "default": "#2d2d2d",
+          "default": "#232436",
           "description": "Header background color (hex format)",
           "order": 8
         },
         "thealmighty.inputColor": {
           "type": "string",
-          "default": "#252526",
+          "default": "#232436",
           "description": "Input background color (hex format)",
           "order": 9
         },
