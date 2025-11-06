@@ -112,13 +112,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             console.log("[PANEL] Switching session to:", message.sessionId);
             this._handleSwitchSession(message.sessionId);
             break;
-          case "deleteSession":
-            console.log(
-              "[PANEL] Delete session command received for:",
-              message.sessionId
-            );
-            this._handleDeleteSession(message.sessionId);
-            break;
           case "updateSessionTitle":
             this._handleUpdateSessionTitle(message.sessionId, message.title);
             break;
@@ -226,34 +219,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         command: "sessionSwitched",
         sessionId: sessionId,
       });
-    }
-  }
-
-  private _handleDeleteSession(sessionId: string) {
-    console.log("[PANEL] ===== _handleDeleteSession CALLED =====");
-    console.log("[PANEL] Session ID to delete:", sessionId);
-    console.log("[PANEL] Session ID type:", typeof sessionId);
-
-    if (!this._view) {
-      console.log("[PANEL] ERROR: No view available");
-      return;
-    }
-
-    console.log("[PANEL] View is available, calling agent.deleteSession");
-    const agent = TheAlmightyAgent.getInstance();
-    const result = agent.deleteSession(sessionId);
-    console.log("[PANEL] deleteSession result:", result);
-
-    if (result) {
-      console.log(
-        "[PANEL] Deletion successful, reloading conversation history..."
-      );
-      this._loadConversationHistory();
-      console.log("[PANEL] Loading sessions list...");
-      this._handleGetSessions();
-      console.log("[PANEL] Sessions list sent to webview");
-    } else {
-      console.log("[PANEL] ERROR: Deletion failed!");
     }
   }
 
@@ -797,11 +762,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
             </button>
-            <button class="btn" id="deleteSessionBtn" title="Delete Current Session">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                </svg>
-            </button>
             <button class="btn" id="settingsBtn" title="Open Settings">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
@@ -901,10 +861,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             newChatBtn.addEventListener('click', createNewSession);
         }
 
-        const deleteSessionBtn = document.getElementById('deleteSessionBtn');
-        if (deleteSessionBtn) {
-            deleteSessionBtn.addEventListener('click', deleteCurrentSession);
-        }
 
         // Session management
         let sessions = [];
@@ -950,30 +906,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             vscode.postMessage({ command: 'switchSession', sessionId: sessionId });
         }
         
-        function deleteCurrentSession() {
-            console.log('[WEBVIEW] ===== deleteCurrentSession CALLED =====');
-            console.log('[WEBVIEW] Current session ID:', currentSessionId);
-            
-            if (!currentSessionId) {
-                alert('No active session to delete');
-                return;
-            }
-            
-            // Find current session name for better confirmation message
-            const currentSession = sessions.find(s => s.id === currentSessionId);
-            const sessionName = currentSession ? currentSession.title : 'this session';
-            
-            const confirmed = confirm(\`Are you sure you want to delete "\${sessionName}"?\n\nThis action cannot be undone.\`);
-            console.log('[WEBVIEW] Confirmation result:', confirmed);
-            
-            if (confirmed) {
-                console.log('[WEBVIEW] Sending deleteSession message for:', currentSessionId);
-                vscode.postMessage({ command: 'deleteSession', sessionId: currentSessionId });
-                console.log('[WEBVIEW] Message sent');
-            } else {
-                console.log('[WEBVIEW] User cancelled deletion');
-            }
-        }
 
 
         function addMessage(role, content, timestamp) {
