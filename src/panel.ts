@@ -79,8 +79,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     // Handle messages from the webview
     const messageHandler = webviewView.webview.onDidReceiveMessage(
       async (message) => {
+        console.log("[PANEL] Received message from webview:", message.command, message);
+        
         switch (message.command) {
           case "ready":
+            console.log("[PANEL] Webview ready, loading initial data");
             // Webview is ready, load history and sessions
             this._loadConversationHistory();
             this._handleGetSessions();
@@ -98,18 +101,22 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             this._handleOpenSettings();
             break;
           case "createNewSession":
+            console.log("[PANEL] Creating new session");
             this._handleCreateNewSession();
             break;
           case "switchSession":
+            console.log("[PANEL] Switching session to:", message.sessionId);
             this._handleSwitchSession(message.sessionId);
             break;
           case "deleteSession":
+            console.log("[PANEL] Delete session command received for:", message.sessionId);
             this._handleDeleteSession(message.sessionId);
             break;
           case "updateSessionTitle":
             this._handleUpdateSessionTitle(message.sessionId, message.title);
             break;
           case "getSessions":
+            console.log("[PANEL] Get sessions requested");
             this._handleGetSessions();
             break;
         }
@@ -216,18 +223,28 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
   }
 
   private _handleDeleteSession(sessionId: string) {
-    console.log("_handleDeleteSession called with sessionId:", sessionId);
+    console.log("[PANEL] ===== _handleDeleteSession CALLED =====");
+    console.log("[PANEL] Session ID to delete:", sessionId);
+    console.log("[PANEL] Session ID type:", typeof sessionId);
+    
     if (!this._view) {
-      console.log("No view available");
+      console.log("[PANEL] ERROR: No view available");
       return;
     }
 
+    console.log("[PANEL] View is available, calling agent.deleteSession");
     const agent = TheAlmightyAgent.getInstance();
     const result = agent.deleteSession(sessionId);
-    console.log("deleteSession result:", result);
+    console.log("[PANEL] deleteSession result:", result);
+    
     if (result) {
+      console.log("[PANEL] Deletion successful, reloading conversation history...");
       this._loadConversationHistory();
+      console.log("[PANEL] Loading sessions list...");
       this._handleGetSessions();
+      console.log("[PANEL] Sessions list sent to webview");
+    } else {
+      console.log("[PANEL] ERROR: Deletion failed!");
     }
   }
 
@@ -242,15 +259,21 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
   }
 
   private _handleGetSessions() {
+    console.log("[PANEL] _handleGetSessions called");
     if (!this._view) {
+      console.log("[PANEL] ERROR: No view available");
       return;
     }
 
     const agent = TheAlmightyAgent.getInstance();
     const sessions = agent.getSessions();
     const currentSessionId = agent.getCurrentSessionId();
+    
+    console.log("[PANEL] Got", sessions.length, "sessions from agent");
+    console.log("[PANEL] Current session ID:", currentSessionId);
+    console.log("[PANEL] Session IDs:", sessions.map(s => s.id));
 
-    this._view.webview.postMessage({
+    const message = {
       command: "sessionsUpdated",
       sessions: sessions.map((s) => ({
         id: s.id,
@@ -264,7 +287,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         updatedAt: s.updatedAt.toISOString(),
       })),
       currentSessionId: currentSessionId,
-    });
+    };
+    
+    console.log("[PANEL] Sending sessionsUpdated message to webview");
+    this._view.webview.postMessage(message);
+    console.log("[PANEL] Message sent");
   }
 
   private _loadConversationHistory() {
@@ -910,6 +937,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         // Handle messages from extension
         window.addEventListener('message', event => {
             const message = event.data;
+            console.log('[WEBVIEW] Received message from extension:', message.command, message);
             
             switch (message.command) {
                 case 'addMessage':
@@ -919,11 +947,15 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                     clearMessages();
                     break;
                 case 'sessionsUpdated':
+                    console.log('[WEBVIEW] Sessions updated! Received', message.sessions?.length, 'sessions');
+                    console.log('[WEBVIEW] Current session ID:', message.currentSessionId);
                     sessions = message.sessions || [];
                     currentSessionId = message.currentSessionId;
                     updateHistoryList();
+                    console.log('[WEBVIEW] History list updated');
                     break;
                 case 'sessionSwitched':
+                    console.log('[WEBVIEW] Session switched to:', message.sessionId);
                     currentSessionId = message.sessionId;
                     updateHistoryList();
                     break;
@@ -981,22 +1013,33 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         function updateHistoryList() {
-            if (!historyList) return;
+            console.log('[WEBVIEW] updateHistoryList called');
+            console.log('[WEBVIEW] Total sessions:', sessions.length);
+            console.log('[WEBVIEW] Sessions array:', sessions);
+            
+            if (!historyList) {
+                console.log('[WEBVIEW] ERROR: historyList element not found!');
+                return;
+            }
             
             // Filter sessions that have messages
             const sessionsWithMessages = sessions.filter(s => s.messages && s.messages.length > 0);
+            console.log('[WEBVIEW] Sessions with messages:', sessionsWithMessages.length);
             
             if (sessionsWithMessages.length === 0) {
+                console.log('[WEBVIEW] No sessions with messages, showing empty state');
                 historyList.innerHTML = \`<div style="padding: 30px 16px; text-align: center; color: ${textColor}; opacity: 0.5; font-size: ${
       fontSize - 1
     }px;">No chat history yet</div>\`;
                 return;
             }
             
+            console.log('[WEBVIEW] Clearing history list and rebuilding...');
             historyList.innerHTML = '';
             
             // Sort by most recent update
             const sortedSessions = [...sessionsWithMessages].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            console.log('[WEBVIEW] Sorted sessions:', sortedSessions.length);
             
             sortedSessions.forEach(session => {
                 const item = document.createElement('div');
@@ -1040,18 +1083,26 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 
                 // Use mousedown which fires earlier than click
                 deleteBtn.onmousedown = (e) => {
-                    console.log('MOUSEDOWN FIRED for session:', session.id);
+                    console.log('[WEBVIEW] ===== DELETE BUTTON MOUSEDOWN =====');
+                    console.log('[WEBVIEW] Mousedown fired for session:', session.id);
+                    console.log('[WEBVIEW] Event target:', e.target);
+                    console.log('[WEBVIEW] Button element:', deleteBtn);
                     e.stopPropagation();
                     e.preventDefault();
                     
                     // Use setTimeout to ensure this runs after any other handlers
                     setTimeout(() => {
-                        console.log('Processing delete for session:', session.id);
+                        console.log('[WEBVIEW] Processing delete for session:', session.id);
                         const confirmed = confirm('Delete this chat session?');
-                        console.log('Confirmation result:', confirmed);
+                        console.log('[WEBVIEW] Confirmation result:', confirmed);
                         if (confirmed) {
-                            console.log('Sending deleteSession message for:', session.id);
-                            vscode.postMessage({ command: 'deleteSession', sessionId: session.id });
+                            console.log('[WEBVIEW] Sending deleteSession message with sessionId:', session.id);
+                            const message = { command: 'deleteSession', sessionId: session.id };
+                            console.log('[WEBVIEW] Message object:', message);
+                            vscode.postMessage(message);
+                            console.log('[WEBVIEW] Message sent successfully');
+                        } else {
+                            console.log('[WEBVIEW] User cancelled deletion');
                         }
                     }, 0);
                     

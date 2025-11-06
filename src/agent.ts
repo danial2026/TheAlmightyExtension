@@ -166,25 +166,42 @@ export class TheAlmightyAgent {
     }
 
     public deleteSession(sessionId: string): boolean {
-        console.log('Agent.deleteSession called for:', sessionId);
+        console.log('[AGENT] ===== deleteSession CALLED =====');
+        console.log('[AGENT] Session ID to delete:', sessionId);
+        console.log('[AGENT] Session ID type:', typeof sessionId);
+        console.log('[AGENT] Current sessions count:', this.sessions.length);
+        console.log('[AGENT] All session IDs:', this.sessions.map(s => s.id));
+        
         const index = this.sessions.findIndex(s => s.id === sessionId);
-        console.log('Session index:', index, 'Total sessions:', this.sessions.length);
+        console.log('[AGENT] Found session at index:', index);
+        
         if (index !== -1) {
-            console.log('Deleting session at index:', index);
+            const sessionToDelete = this.sessions[index];
+            console.log('[AGENT] Deleting session:', sessionToDelete.title);
+            console.log('[AGENT] Session has', sessionToDelete.messages.length, 'messages');
+            
             this.sessions.splice(index, 1);
+            console.log('[AGENT] Session removed. Remaining sessions:', this.sessions.length);
+            
             if (this.currentSessionId === sessionId) {
-                console.log('Deleted session was current, switching...');
+                console.log('[AGENT] Deleted session was the current session');
                 this.currentSessionId = null;
                 this.conversationHistory = [];
                 if (this.sessions.length > 0) {
+                    console.log('[AGENT] Switching to first available session:', this.sessions[0].id);
                     this.switchSession(this.sessions[0].id);
+                } else {
+                    console.log('[AGENT] No sessions left');
                 }
             }
+            
+            console.log('[AGENT] Saving sessions to storage...');
             this.saveSessions();
-            console.log('Session deleted successfully');
+            console.log('[AGENT] Session deleted successfully!');
             return true;
         }
-        console.log('Session not found');
+        
+        console.log('[AGENT] ERROR: Session not found in sessions array!');
         return false;
     }
 
