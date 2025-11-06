@@ -163,6 +163,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         timeoutPromise,
       ]);
 
+      // Add minimum delay to show loading animation (at least 1 second)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Add response to UI
       this._view.webview.postMessage({
         command: "addMessage",
@@ -175,6 +178,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
       this._handleGetSessions();
     } catch (error) {
       console.error("[PANEL] Error processing message:", error);
+
+      // Add minimum delay to show loading animation even for errors (at least 1 second)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       this._view.webview.postMessage({
         command: "addMessage",
         role: "assistant",
@@ -217,6 +224,9 @@ The message processing hath been interrupted. Try again, and We shall attempt to
         response.substring(0, 100) + "..."
       );
 
+      // Add minimum delay to show loading animation (at least 1 second)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       this._view.webview.postMessage({
         command: "addMessage",
         role: "assistant",
@@ -226,6 +236,10 @@ The message processing hath been interrupted. Try again, and We shall attempt to
       console.log("[PANEL] Check-in message sent to webview");
     } catch (error) {
       console.error("[PANEL] Error during check-in:", error);
+
+      // Add minimum delay to show loading animation even for errors (at least 1 second)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       this._view.webview.postMessage({
         command: "addMessage",
         role: "assistant",
@@ -662,7 +676,11 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             padding: 12px;
             justify-content: center;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            background: ${assistantMessageColor};
+            border-radius: 18px;
+            margin: 15px;
+            border: 1px solid ${borderColor};
         }
 
         .typing-indicator.active {
@@ -670,12 +688,13 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
         }
 
         .dot {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             background: ${textColor};
-            opacity: 0.6;
-            animation: snake 1.0s infinite ease-in-out;
+            opacity: 0.8;
+            animation: snake 0.8s infinite ease-in-out;
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
         }
 
         .dot:nth-child(1) { animation-delay: -0.25s; }
@@ -685,11 +704,11 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
 
         @keyframes snake {
             0%, 80%, 100% {
-                transform: scale(0.3);
-                opacity: 0.2;
+                transform: scale(0.2);
+                opacity: 0.3;
             }
             40% {
-                transform: scale(1.5);
+                transform: scale(1.8);
                 opacity: 1;
             }
         }
@@ -959,6 +978,10 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             sendBtn.addEventListener('click', sendMessage);
         }
         const typingIndicator = document.getElementById('typingIndicator');
+        console.log('[WEBVIEW] Typing indicator element found:', typingIndicator);
+        if (!typingIndicator) {
+            console.error('[WEBVIEW] ERROR: Typing indicator element not found!');
+        }
         const iconUri = "${iconUri}";
         const fullImageUri = "${fullImageUri}";
 
@@ -1070,7 +1093,10 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
+            console.log('[WEBVIEW] Removing active class from typing indicator');
+            console.log('[WEBVIEW] Typing indicator classes before removal:', typingIndicator.className);
             typingIndicator.classList.remove('active');
+            console.log('[WEBVIEW] Typing indicator classes after removal:', typingIndicator.className);
             sendBtn.disabled = false;
         }
 
@@ -1177,7 +1203,10 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             messageInput.value = '';
             autoResize(messageInput);
             sendBtn.disabled = true;
+            console.log('[WEBVIEW] Adding active class to typing indicator');
             typingIndicator.classList.add('active');
+            console.log('[WEBVIEW] Typing indicator classes:', typingIndicator.className);
+            console.log('[WEBVIEW] Typing indicator display:', getComputedStyle(typingIndicator).display);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
             vscode.postMessage({
@@ -1192,8 +1221,10 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
         }
 
         function checkIn() {
+            console.log('[WEBVIEW] Check-in: Adding active class to typing indicator');
             sendBtn.disabled = true;
             typingIndicator.classList.add('active');
+            console.log('[WEBVIEW] Check-in: Typing indicator classes:', typingIndicator.className);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
             vscode.postMessage({
