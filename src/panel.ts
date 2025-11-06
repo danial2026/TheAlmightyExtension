@@ -697,19 +697,19 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
         }
 
-        .dot:nth-child(1) { animation-delay: -0.25s; }
-        .dot:nth-child(2) { animation-delay: -0.125s; }
-        .dot:nth-child(3) { animation-delay: 0s; }
-        .dot:nth-child(4) { animation-delay: 0.125s; }
+        .dot:nth-child(1) { animation-delay: 0s; }
+        .dot:nth-child(2) { animation-delay: 0.125s; }
+        .dot:nth-child(3) { animation-delay: 0.25s; }
+        .dot:nth-child(4) { animation-delay: 0.375s; }
 
         @keyframes snake {
             0%, 80%, 100% {
                 transform: scale(0.2);
-                opacity: 0.3;
+                opacity: 0.2;
             }
             40% {
                 transform: scale(1.8);
-                opacity: 1;
+                opacity: 1.0;
             }
         }
 
