@@ -478,7 +478,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             flex: 1;
             max-width: 100%;
             padding: 12px;
-            border-radius: 8px;
             border: 1px solid ${borderColor};
             line-height: 1.5;
             white-space: pre-wrap;
@@ -492,6 +491,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             background: ${assistantMessageColor};
             color: ${textColor};
             border-color: ${borderColor};
+            border-radius: 18px 18px 18px 4px;
         }
 
         .message.assistant .message-content {
@@ -499,6 +499,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             color: ${textColor};
             font-family: 'Georgia', serif;
             font-style: italic;
+            border-radius: 18px 18px 4px 18px;
         }
 
         .input-container {
@@ -652,7 +653,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .history-dropdown {
             position: absolute;
             top: 100%;
-            left: 50%;
+            left: 0;
             transform: translateX(-50%);
             margin-top: 4px;
             background: ${backgroundColor};
