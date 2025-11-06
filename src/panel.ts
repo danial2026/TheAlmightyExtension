@@ -972,6 +972,18 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         function switchSession(sessionId) {
             vscode.postMessage({ command: 'switchSession', sessionId: sessionId });
         }
+        
+        function deleteSessionById(sessionId) {
+            console.log('[WEBVIEW] ===== deleteSessionById CALLED =====');
+            console.log('[WEBVIEW] Session ID:', sessionId);
+            const confirmed = confirm('Delete this chat session?');
+            console.log('[WEBVIEW] Confirmation result:', confirmed);
+            if (confirmed) {
+                console.log('[WEBVIEW] Sending deleteSession message');
+                vscode.postMessage({ command: 'deleteSession', sessionId: sessionId });
+                console.log('[WEBVIEW] Message sent');
+            }
+        }
 
 
         function addMessage(role, content, timestamp) {
@@ -1072,42 +1084,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 deleteBtn.className = 'history-item-delete';
                 deleteBtn.title = 'Delete session';
                 deleteBtn.type = 'button';
-                deleteBtn.textContent = '🗑️'; // Use emoji for now to make sure it's visible
-                deleteBtn.setAttribute('data-session-id', session.id);
-                deleteBtn.style.pointerEvents = 'auto';
-                deleteBtn.style.cursor = 'pointer';
-                deleteBtn.style.position = 'relative';
-                deleteBtn.style.zIndex = '1000';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.setAttribute('onclick', \`deleteSessionById('\${session.id}')\`);
                 
                 console.log('Creating delete button for session:', session.id);
-                
-                // Use mousedown which fires earlier than click
-                deleteBtn.onmousedown = (e) => {
-                    console.log('[WEBVIEW] ===== DELETE BUTTON MOUSEDOWN =====');
-                    console.log('[WEBVIEW] Mousedown fired for session:', session.id);
-                    console.log('[WEBVIEW] Event target:', e.target);
-                    console.log('[WEBVIEW] Button element:', deleteBtn);
-                    e.stopPropagation();
-                    e.preventDefault();
-                    
-                    // Use setTimeout to ensure this runs after any other handlers
-                    setTimeout(() => {
-                        console.log('[WEBVIEW] Processing delete for session:', session.id);
-                        const confirmed = confirm('Delete this chat session?');
-                        console.log('[WEBVIEW] Confirmation result:', confirmed);
-                        if (confirmed) {
-                            console.log('[WEBVIEW] Sending deleteSession message with sessionId:', session.id);
-                            const message = { command: 'deleteSession', sessionId: session.id };
-                            console.log('[WEBVIEW] Message object:', message);
-                            vscode.postMessage(message);
-                            console.log('[WEBVIEW] Message sent successfully');
-                        } else {
-                            console.log('[WEBVIEW] User cancelled deletion');
-                        }
-                    }, 0);
-                    
-                    return false;
-                };
                 
                 const meta = document.createElement('div');
                 meta.className = 'history-item-meta';
