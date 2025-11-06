@@ -34,11 +34,11 @@ export class TheAlmightyAgent {
         return TheAlmightyAgent.instance;
     }
 
-    public initialize(context: vscode.ExtensionContext) {
+    public async initialize(context: vscode.ExtensionContext) {
         this.context = context;
-        this.loadSessions();
-        this.loadCurrentSession();
-        
+        await this.loadSessions();
+        await this.loadCurrentSession();
+
         // Check on user periodically
         this.schedulePeriodicCheck();
     }
