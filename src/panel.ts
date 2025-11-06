@@ -607,26 +607,26 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         .dot {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background: ${textColor};
-            opacity: 0.6;
-            animation: snake 1.4s infinite ease-in-out;
+            opacity: 0.4;
+            animation: snake 1.2s infinite ease-in-out;
         }
 
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
+        .dot:nth-child(1) { animation-delay: -0.3s; }
+        .dot:nth-child(2) { animation-delay: -0.15s; }
         .dot:nth-child(3) { animation-delay: 0s; }
-        .dot:nth-child(4) { animation-delay: 0.16s; }
+        .dot:nth-child(4) { animation-delay: 0.15s; }
 
         @keyframes snake {
             0%, 80%, 100% {
-                transform: scale(0.8);
-                opacity: 0.5;
+                transform: scale(0.5);
+                opacity: 0.3;
             }
             40% {
-                transform: scale(1);
+                transform: scale(1.2);
                 opacity: 1;
             }
         }
@@ -1006,8 +1006,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
-            
+
+            console.log('[WEBVIEW] Deactivating typing indicator');
             typingIndicator.classList.remove('active');
+            console.log('[WEBVIEW] Typing indicator deactivated:', !typingIndicator.classList.contains('active'));
             sendBtn.disabled = false;
         }
 
@@ -1111,10 +1113,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 return;
             }
 
+            console.log('[WEBVIEW] Activating typing indicator');
             messageInput.value = '';
             autoResize(messageInput);
             sendBtn.disabled = true;
             typingIndicator.classList.add('active');
+            console.log('[WEBVIEW] Typing indicator activated:', typingIndicator.classList.contains('active'));
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
             vscode.postMessage({
@@ -1129,8 +1133,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         }
 
         function checkIn() {
+            console.log('[WEBVIEW] CheckIn: Activating typing indicator');
             sendBtn.disabled = true;
             typingIndicator.classList.add('active');
+            console.log('[WEBVIEW] CheckIn: Typing indicator activated:', typingIndicator.classList.contains('active'));
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
             vscode.postMessage({
