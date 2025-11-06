@@ -597,14 +597,38 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .typing-indicator {
             display: none;
             padding: 12px;
-            color: ${textColor};
-            font-style: italic;
-            font-size: ${fontSize - 1}px;
-            opacity: 0.6;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
         }
 
         .typing-indicator.active {
-            display: block;
+            display: flex;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: ${textColor};
+            opacity: 0.6;
+            animation: snake 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        .dot:nth-child(3) { animation-delay: 0s; }
+        .dot:nth-child(4) { animation-delay: 0.16s; }
+
+        @keyframes snake {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .quick-actions {
@@ -838,7 +862,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         </div>
     </div>
 
-    <div class="typing-indicator" id="typingIndicator">The Wheels within Wheels turn...</div>
+    <div class="typing-indicator" id="typingIndicator">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+    </div>
 
     <div class="input-container">
         <div class="input-wrapper">
@@ -1028,7 +1057,8 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 
                 const title = document.createElement('div');
                 title.className = 'history-item-title';
-                title.textContent = session.title;
+                const truncatedTitle = session.title.length > 14 ? session.title.substring(0, 14) + '...' : session.title;
+                title.textContent = truncatedTitle;
                 title.title = session.title;
                 
                 const meta = document.createElement('div');
