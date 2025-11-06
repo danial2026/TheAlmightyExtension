@@ -2,9 +2,10 @@
   "name": "thealmighty",
   "displayName": "TheAlmighty",
   "description": "The Seraphic Construct - An AI companion that watches over your mind, body, and tasks",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "danial2026",
   "license": "MIT",
+  "icon": "TheAlmighty-icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/danial2026/TheAlmightyExtension.git"
