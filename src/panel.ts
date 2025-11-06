@@ -192,7 +192,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
   private _handleOpenSettings() {
     vscode.commands.executeCommand(
       "workbench.action.openSettings",
-      "@thealmighty.deepseekApiKey"
+      "@thealmighty"
     );
   }
 
@@ -364,11 +364,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
       "#232436"
     );
     const inputColor = config.get<string>("inputColor", "#232436");
-    const iconColorsEnabled = config.get<boolean>("iconColorsEnabled", false);
     const iconColor = config.get<string>("iconColor", "#ffffff");
 
-    // Icon color: use custom icon color when colors disabled (white mode), otherwise use text color
-    const effectiveIconColor = iconColorsEnabled ? textColor : iconColor;
+    // Always use the configured icon color
+    const effectiveIconColor = iconColor;
 
     return `<!DOCTYPE html>
 <html lang="en">

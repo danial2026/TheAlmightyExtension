@@ -131,17 +131,11 @@
           "description": "Input background color (hex format)",
           "order": 9
         },
-        "thealmighty.iconColorsEnabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable colored icons (when disabled, icons will be white/grey)",
-          "order": 10
-        },
         "thealmighty.iconColor": {
           "type": "string",
           "default": "#ffffff",
-          "description": "Icon color (hex format, used when iconColorsEnabled is false)",
-          "order": 11
+          "description": "Icon color (hex format)",
+          "order": 10
         }
       }
     }
