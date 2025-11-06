@@ -737,7 +737,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             gap: 6px;
             position: relative;
             transition: background 0.2s ease;
-            cursor: default;
+            cursor: pointer;
         }
 
         .history-item:hover {
@@ -748,18 +748,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             background: ${inputColor};
             border-left: 3px solid ${textColor};
             padding-left: 13px;
-        }
-
-        .history-item-content {
-            flex: 1;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: background 0.2s ease;
-        }
-        
-        .history-item-content:hover {
-            background: rgba(255, 255, 255, 0.05);
         }
 
         .history-item-title {
@@ -785,47 +773,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             align-items: center;
             gap: 8px;
         }
-
-        .history-item-delete {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            background: transparent;
-            border: 1px solid rgba(255, 0, 0, 0.3);
-            color: ${textColor};
-            cursor: pointer;
-            padding: 0;
-            flex-shrink: 0;
-            opacity: 0.6;
-            pointer-events: auto;
-            z-index: 100;
-            position: relative;
-            transition: all 0.2s ease;
-        }
-
-        .history-item:hover .history-item-delete {
-            opacity: 0.8;
-        }
-
-        .history-item-delete:hover {
-            background: rgba(255, 0, 0, 0.2);
-            opacity: 1 !important;
-            transform: scale(1.15);
-        }
-
-        .history-item-delete:active {
-            transform: scale(0.95);
-        }
-
-        .history-item-delete svg {
-            width: 18px;
-            height: 18px;
-            fill: ${effectiveIconColor};
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
@@ -836,6 +783,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </button>
+            <button class="btn" id="deleteSessionBtn" title="Delete Current Session" onclick="deleteCurrentSession()">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                 </svg>
             </button>
             <button class="btn" id="settingsBtn" title="Open Settings">
@@ -973,14 +925,21 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             vscode.postMessage({ command: 'switchSession', sessionId: sessionId });
         }
         
-        function deleteSessionById(sessionId) {
-            console.log('[WEBVIEW] ===== deleteSessionById CALLED =====');
-            console.log('[WEBVIEW] Session ID:', sessionId);
-            const confirmed = confirm('Delete this chat session?');
+        function deleteCurrentSession() {
+            console.log('[WEBVIEW] ===== deleteCurrentSession CALLED =====');
+            console.log('[WEBVIEW] Current session ID:', currentSessionId);
+            
+            if (!currentSessionId) {
+                alert('No session to delete');
+                return;
+            }
+            
+            const confirmed = confirm('Delete the current chat session?');
             console.log('[WEBVIEW] Confirmation result:', confirmed);
+            
             if (confirmed) {
-                console.log('[WEBVIEW] Sending deleteSession message');
-                vscode.postMessage({ command: 'deleteSession', sessionId: sessionId });
+                console.log('[WEBVIEW] Sending deleteSession message for:', currentSessionId);
+                vscode.postMessage({ command: 'deleteSession', sessionId: currentSessionId });
                 console.log('[WEBVIEW] Message sent');
             }
         }
@@ -1060,34 +1019,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                     item.classList.add('active');
                 }
                 
-                const content = document.createElement('div');
-                content.className = 'history-item-content';
-                
                 const title = document.createElement('div');
                 title.className = 'history-item-title';
                 title.textContent = session.title;
                 title.title = session.title;
-                
-                // Handle content click (for switching sessions) - add title to content first
-                content.appendChild(title);
-                
-                content.addEventListener('click', (e) => {
-                    console.log('Content clicked, switching to session:', session.id);
-                    switchSession(session.id);
-                    if (historyDropdown) {
-                        historyDropdown.classList.remove('open');
-                    }
-                });
-                
-                // Create delete button SEPARATELY - not inside content
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'history-item-delete';
-                deleteBtn.title = 'Delete session';
-                deleteBtn.type = 'button';
-                deleteBtn.textContent = '🗑️';
-                deleteBtn.setAttribute('onclick', \`deleteSessionById('\${session.id}')\`);
-                
-                console.log('Creating delete button for session:', session.id);
                 
                 const meta = document.createElement('div');
                 meta.className = 'history-item-meta';
@@ -1096,16 +1031,16 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 meta.textContent = \`\${messageCount} message\${messageCount !== 1 ? 's' : ''} • \${dateStr}\`;
                 
-                // Add content and deleteBtn to a wrapper
-                const topRow = document.createElement('div');
-                topRow.className = 'history-item-top-row';
-                topRow.style.display = 'flex';
-                topRow.style.alignItems = 'center';
-                topRow.style.gap = '12px';
-                topRow.appendChild(content);
-                topRow.appendChild(deleteBtn);
+                // Click to switch session
+                item.addEventListener('click', () => {
+                    console.log('Switching to session:', session.id);
+                    switchSession(session.id);
+                    if (historyDropdown) {
+                        historyDropdown.classList.remove('open');
+                    }
+                });
                 
-                item.appendChild(topRow);
+                item.appendChild(title);
                 item.appendChild(meta);
                 historyList.appendChild(item);
             });
