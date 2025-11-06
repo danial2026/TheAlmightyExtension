@@ -79,8 +79,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     // Handle messages from the webview
     const messageHandler = webviewView.webview.onDidReceiveMessage(
       async (message) => {
-        console.log("[PANEL] Received message from webview:", message.command, message);
-        
+        console.log(
+          "[PANEL] Received message from webview:",
+          message.command,
+          message
+        );
+
         switch (message.command) {
           case "ready":
             console.log("[PANEL] Webview ready, loading initial data");
@@ -109,7 +113,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             this._handleSwitchSession(message.sessionId);
             break;
           case "deleteSession":
-            console.log("[PANEL] Delete session command received for:", message.sessionId);
+            console.log(
+              "[PANEL] Delete session command received for:",
+              message.sessionId
+            );
             this._handleDeleteSession(message.sessionId);
             break;
           case "updateSessionTitle":
@@ -226,7 +233,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     console.log("[PANEL] ===== _handleDeleteSession CALLED =====");
     console.log("[PANEL] Session ID to delete:", sessionId);
     console.log("[PANEL] Session ID type:", typeof sessionId);
-    
+
     if (!this._view) {
       console.log("[PANEL] ERROR: No view available");
       return;
@@ -236,9 +243,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     const agent = TheAlmightyAgent.getInstance();
     const result = agent.deleteSession(sessionId);
     console.log("[PANEL] deleteSession result:", result);
-    
+
     if (result) {
-      console.log("[PANEL] Deletion successful, reloading conversation history...");
+      console.log(
+        "[PANEL] Deletion successful, reloading conversation history..."
+      );
       this._loadConversationHistory();
       console.log("[PANEL] Loading sessions list...");
       this._handleGetSessions();
@@ -268,10 +277,13 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     const agent = TheAlmightyAgent.getInstance();
     const sessions = agent.getSessions();
     const currentSessionId = agent.getCurrentSessionId();
-    
+
     console.log("[PANEL] Got", sessions.length, "sessions from agent");
     console.log("[PANEL] Current session ID:", currentSessionId);
-    console.log("[PANEL] Session IDs:", sessions.map(s => s.id));
+    console.log(
+      "[PANEL] Session IDs:",
+      sessions.map((s) => s.id)
+    );
 
     const message = {
       command: "sessionsUpdated",
@@ -288,7 +300,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
       })),
       currentSessionId: currentSessionId,
     };
-    
+
     console.log("[PANEL] Sending sessionsUpdated message to webview");
     this._view.webview.postMessage(message);
     console.log("[PANEL] Message sent");
@@ -785,7 +797,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
             </button>
-            <button class="btn" id="deleteSessionBtn" title="Delete Current Session" onclick="deleteCurrentSession()">
+            <button class="btn" id="deleteSessionBtn" title="Delete Current Session">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                 </svg>
@@ -805,7 +817,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             <div class="history-dropdown" id="historyDropdown">
                 <div class="history-header">
                     <span>Chat History</span>
-                    <button class="history-new-chat-btn" onclick="createNewSession()" title="New Chat">
+                    <button class="history-new-chat-btn" id="newChatBtn" title="New Chat">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -839,7 +851,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 oninput="autoResize(this)"
             ></textarea>
         </div>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+        <button class="send-btn" id="sendBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -852,6 +864,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         const chatContainer = document.getElementById('chatContainer');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
+        if (sendBtn) {
+            sendBtn.addEventListener('click', sendMessage);
+        }
         const typingIndicator = document.getElementById('typingIndicator');
         const iconUri = "${iconUri}";
         const fullImageUri = "${fullImageUri}";
@@ -876,9 +891,19 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         const historyBtn = document.getElementById('historyBtn');
         const historyDropdown = document.getElementById('historyDropdown');
         const historyList = document.getElementById('historyList');
-        
+        const newChatBtn = document.getElementById('newChatBtn');
+
         if (historyBtn) {
             historyBtn.addEventListener('click', toggleHistory);
+        }
+
+        if (newChatBtn) {
+            newChatBtn.addEventListener('click', createNewSession);
+        }
+
+        const deleteSessionBtn = document.getElementById('deleteSessionBtn');
+        if (deleteSessionBtn) {
+            deleteSessionBtn.addEventListener('click', deleteCurrentSession);
         }
 
         // Session management
