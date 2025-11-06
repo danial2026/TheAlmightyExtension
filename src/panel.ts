@@ -652,7 +652,8 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .history-dropdown {
             position: absolute;
             top: 100%;
-            right: 0;
+            left: 50%;
+            transform: translateX(-50%);
             margin-top: 4px;
             background: ${backgroundColor};
             border: 1px solid ${borderColor};
