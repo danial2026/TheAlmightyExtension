@@ -930,17 +930,23 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             console.log('[WEBVIEW] Current session ID:', currentSessionId);
             
             if (!currentSessionId) {
-                alert('No session to delete');
+                alert('No active session to delete');
                 return;
             }
             
-            const confirmed = confirm('Delete the current chat session?');
+            // Find current session name for better confirmation message
+            const currentSession = sessions.find(s => s.id === currentSessionId);
+            const sessionName = currentSession ? currentSession.title : 'this session';
+            
+            const confirmed = confirm(\`Are you sure you want to delete "\${sessionName}"?\n\nThis action cannot be undone.\`);
             console.log('[WEBVIEW] Confirmation result:', confirmed);
             
             if (confirmed) {
                 console.log('[WEBVIEW] Sending deleteSession message for:', currentSessionId);
                 vscode.postMessage({ command: 'deleteSession', sessionId: currentSessionId });
                 console.log('[WEBVIEW] Message sent');
+            } else {
+                console.log('[WEBVIEW] User cancelled deletion');
             }
         }
 
