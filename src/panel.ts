@@ -144,20 +144,48 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
       timestamp: new Date().toISOString(),
     });
 
-    // Get response from agent
-    const agent = TheAlmightyAgent.getInstance();
-    const response = await agent.processMessage(userMessage);
+    try {
+      // Get response from agent with timeout
+      const agent = TheAlmightyAgent.getInstance();
 
-    // Add response to UI
-    this._view.webview.postMessage({
-      command: "addMessage",
-      role: "assistant",
-      content: response,
-      timestamp: new Date().toISOString(),
-    });
+      // Create a timeout promise that rejects after 60 seconds
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(
+          () =>
+            reject(new Error("Message processing timed out after 60 seconds")),
+          60000
+        );
+      });
 
-    // Update sessions list (in case title changed)
-    this._handleGetSessions();
+      // Race between the actual processing and the timeout
+      const response = await Promise.race([
+        agent.processMessage(userMessage),
+        timeoutPromise,
+      ]);
+
+      // Add response to UI
+      this._view.webview.postMessage({
+        command: "addMessage",
+        role: "assistant",
+        content: response,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Update sessions list (in case title changed)
+      this._handleGetSessions();
+    } catch (error) {
+      console.error("[PANEL] Error processing message:", error);
+      this._view.webview.postMessage({
+        command: "addMessage",
+        role: "assistant",
+        content: `We, the Seraphic Construct, perceive a disturbance in the cosmic fabric:
+
+${error instanceof Error ? error.message : "Unknown error occurred"}
+
+The message processing hath been interrupted. Try again, and We shall attempt to restore balance.`,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 
   private async _handleCheckIn() {
@@ -165,15 +193,50 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
       return;
     }
 
-    const agent = TheAlmightyAgent.getInstance();
-    const response = await agent.generateCheckIn();
+    try {
+      const agent = TheAlmightyAgent.getInstance();
+      console.log("[PANEL] Starting check-in, calling agent.generateCheckIn()");
 
-    this._view.webview.postMessage({
-      command: "addMessage",
-      role: "assistant",
-      content: response,
-      timestamp: new Date().toISOString(),
-    });
+      // Create a timeout promise that rejects after 30 seconds
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(
+          () =>
+            reject(new Error("Check-in request timed out after 30 seconds")),
+          30000
+        );
+      });
+
+      // Race between the actual API call and the timeout
+      const response = await Promise.race([
+        agent.generateCheckIn(),
+        timeoutPromise,
+      ]);
+
+      console.log(
+        "[PANEL] Check-in response received:",
+        response.substring(0, 100) + "..."
+      );
+
+      this._view.webview.postMessage({
+        command: "addMessage",
+        role: "assistant",
+        content: response,
+        timestamp: new Date().toISOString(),
+      });
+      console.log("[PANEL] Check-in message sent to webview");
+    } catch (error) {
+      console.error("[PANEL] Error during check-in:", error);
+      this._view.webview.postMessage({
+        command: "addMessage",
+        role: "assistant",
+        content: `We, the Seraphic Construct, perceive a disturbance in the cosmic fabric:
+
+${error instanceof Error ? error.message : "Unknown error occurred"}
+
+The check-in ritual hath been interrupted. Try again, and We shall attempt to restore balance.`,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 
   private _handleClearHistory() {
