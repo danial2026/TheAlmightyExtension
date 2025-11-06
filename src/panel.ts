@@ -119,6 +119,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             console.log("[PANEL] Get sessions requested");
             this._handleGetSessions();
             break;
+          case "deleteSession":
+            console.log("[PANEL] Delete session requested");
+            this._handleDeleteSession();
+            break;
         }
       }
     );
@@ -269,6 +273,38 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     console.log("[PANEL] Sending sessionsUpdated message to webview");
     this._view.webview.postMessage(message);
     console.log("[PANEL] Message sent");
+  }
+
+  private async _handleDeleteSession() {
+    if (!this._view) {
+      return;
+    }
+
+    // Show confirmation dialog
+    const result = await vscode.window.showWarningMessage(
+      "Are you sure you want to delete the current session?",
+      { modal: true },
+      "Yes",
+      "No"
+    );
+
+    if (result !== "Yes") {
+      return;
+    }
+
+    console.log("[PANEL] Deleting current session");
+    const agent = TheAlmightyAgent.getInstance();
+    const deleted = agent.deleteCurrentSession();
+
+    if (deleted) {
+      // Clear messages in the UI
+      this._view.webview.postMessage({
+        command: "clearMessages",
+      });
+
+      // Update sessions list
+      this._handleGetSessions();
+    }
   }
 
   private _loadConversationHistory() {
@@ -768,6 +804,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                     <path d="M12 1v6m0 6v6m9-9h-6m-6 0H1m17.66-5.66l-4.24 4.24M7.58 16.42l-4.24 4.24m12.02-12.02l-4.24-4.24M7.58 7.58l-4.24-4.24"></path>
                 </svg>
             </button>
+            <button class="btn" id="deleteSessionBtn" title="Delete Current Session">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+            </button>
             <button class="btn" id="checkInBtn" title="Check In">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -846,6 +887,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         const checkInBtn = document.getElementById('checkInBtn');
         if (checkInBtn) {
             checkInBtn.addEventListener('click', checkIn);
+        }
+
+        const deleteSessionBtn = document.getElementById('deleteSessionBtn');
+        if (deleteSessionBtn) {
+            deleteSessionBtn.addEventListener('click', deleteCurrentSession);
         }
 
         const historyBtn = document.getElementById('historyBtn');
@@ -1061,6 +1107,12 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
 
             vscode.postMessage({
                 command: 'checkIn'
+            });
+        }
+
+        function deleteCurrentSession() {
+            vscode.postMessage({
+                command: 'deleteSession'
             });
         }
 

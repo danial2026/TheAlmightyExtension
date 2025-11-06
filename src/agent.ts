@@ -177,6 +177,33 @@ export class TheAlmightyAgent {
         return false;
     }
 
+    public deleteCurrentSession(): boolean {
+        if (!this.currentSessionId) {
+            return false;
+        }
+
+        // Remove the session from the sessions array
+        const sessionIndex = this.sessions.findIndex(s => s.id === this.currentSessionId);
+        if (sessionIndex === -1) {
+            return false;
+        }
+
+        this.sessions.splice(sessionIndex, 1);
+
+        // If there are other sessions, switch to the most recent one
+        if (this.sessions.length > 0) {
+            // Sort by updatedAt descending and switch to the first one
+            const sortedSessions = [...this.sessions].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+            this.switchSession(sortedSessions[0].id);
+        } else {
+            // No sessions left, create a new one
+            this.createNewSession('New Chat');
+        }
+
+        this.saveSessions();
+        return true;
+    }
+
     public getSessions(): ChatSession[] {
         return [...this.sessions];
     }
