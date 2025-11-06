@@ -424,7 +424,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .btn {
             background: transparent;
             border: none;
-            color: ${textColor};
+            color: ${effectiveIconColor};
             cursor: pointer;
             font-size: 18px;
             transition: opacity 0.2s;
@@ -440,8 +440,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .btn svg {
             width: 18px;
             height: 18px;
-            fill: ${effectiveIconColor};
-            stroke: ${effectiveIconColor};
         }
 
         .btn:hover {
@@ -547,7 +545,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             background: ${borderColor};
             border: 1px solid ${borderColor};
             border-radius: 6px;
-            color: ${textColor};
+            color: ${effectiveIconColor};
             cursor: pointer;
             font-size: ${fontSize}px;
             font-weight: 600;
@@ -563,8 +561,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .send-btn svg {
             width: 16px;
             height: 16px;
-            fill: ${effectiveIconColor};
-            stroke: ${effectiveIconColor};
         }
 
         .send-btn span {
@@ -622,7 +618,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             background: transparent;
             border: 1px solid ${borderColor};
             border-radius: 4px;
-            color: ${textColor};
+            color: ${effectiveIconColor};
             cursor: pointer;
             font-size: 16px;
             transition: opacity 0.2s;
@@ -636,7 +632,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .quick-action-btn svg {
             width: 16px;
             height: 16px;
-            fill: ${effectiveIconColor};
         }
 
         .quick-action-btn:hover {
@@ -721,7 +716,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             background: ${borderColor};
             border: 1px solid ${borderColor};
             border-radius: 6px;
-            color: ${textColor};
+            color: ${effectiveIconColor};
             cursor: pointer;
             font-size: ${fontSize - 1}px;
             font-weight: 500;
@@ -742,8 +737,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
         .history-new-chat-btn svg {
             width: 14px;
             height: 14px;
-            fill: ${effectiveIconColor};
-            stroke: ${effectiveIconColor};
         }
 
         .history-item {
