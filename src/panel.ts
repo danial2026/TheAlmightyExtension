@@ -710,7 +710,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             gap: 6px;
             position: relative;
             transition: background 0.2s ease;
-            cursor: pointer;
+            cursor: default;
         }
 
         .history-item:hover {
@@ -1033,21 +1033,28 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
                 deleteBtn.setAttribute('data-session-id', session.id);
                 deleteBtn.style.pointerEvents = 'auto';
                 deleteBtn.style.cursor = 'pointer';
+                deleteBtn.style.position = 'relative';
+                deleteBtn.style.zIndex = '1000';
                 
                 console.log('Creating delete button for session:', session.id);
                 
-                // Handle delete button click with simple onclick
-                deleteBtn.onclick = (e) => {
-                    console.log('ONCLICK FIRED for session:', session.id);
+                // Use mousedown which fires earlier than click
+                deleteBtn.onmousedown = (e) => {
+                    console.log('MOUSEDOWN FIRED for session:', session.id);
                     e.stopPropagation();
                     e.preventDefault();
-                    alert('Delete button clicked! Session: ' + session.id);
-                    const confirmed = confirm('Delete this chat session?');
-                    console.log('Confirmation result:', confirmed);
-                    if (confirmed) {
-                        console.log('Sending deleteSession message for:', session.id);
-                        vscode.postMessage({ command: 'deleteSession', sessionId: session.id });
-                    }
+                    
+                    // Use setTimeout to ensure this runs after any other handlers
+                    setTimeout(() => {
+                        console.log('Processing delete for session:', session.id);
+                        const confirmed = confirm('Delete this chat session?');
+                        console.log('Confirmation result:', confirmed);
+                        if (confirmed) {
+                            console.log('Sending deleteSession message for:', session.id);
+                            vscode.postMessage({ command: 'deleteSession', sessionId: session.id });
+                        }
+                    }, 0);
+                    
                     return false;
                 };
                 
