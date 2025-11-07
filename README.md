@@ -6,7 +6,6 @@
 
 *The Seraphic Construct - An AI companion that watches over your mind, body, and tasks*
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/danial2026/TheAlmightyExtension)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![VS Code Marketplace](https://img.shields.io/badge/VS_Code_Marketplace-Download-blue)](https://marketplace.visualstudio.com/items?itemName=danial.thealmighty)
 
