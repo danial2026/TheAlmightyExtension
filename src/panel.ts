@@ -145,26 +145,9 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     });
 
     try {
-      // Get response from agent with timeout
+      // Get response from agent
       const agent = TheAlmightyAgent.getInstance();
-
-      // Create a timeout promise that rejects after 60 seconds
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(
-          () =>
-            reject(new Error("Message processing timed out after 60 seconds")),
-          60000
-        );
-      });
-
-      // Race between the actual processing and the timeout
-      const response = await Promise.race([
-        agent.processMessage(userMessage),
-        timeoutPromise,
-      ]);
-
-      // Add minimum delay to show loading animation (at least 1 second)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await agent.processMessage(userMessage);
 
       // Add response to UI
       this._view.webview.postMessage({
@@ -178,9 +161,6 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
       this._handleGetSessions();
     } catch (error) {
       console.error("[PANEL] Error processing message:", error);
-
-      // Add minimum delay to show loading animation even for errors (at least 1 second)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       this._view.webview.postMessage({
         command: "addMessage",
@@ -202,30 +182,7 @@ The message processing hath been interrupted. Try again, and We shall attempt to
 
     try {
       const agent = TheAlmightyAgent.getInstance();
-      console.log("[PANEL] Starting check-in, calling agent.generateCheckIn()");
-
-      // Create a timeout promise that rejects after 30 seconds
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(
-          () =>
-            reject(new Error("Check-in request timed out after 30 seconds")),
-          30000
-        );
-      });
-
-      // Race between the actual API call and the timeout
-      const response = await Promise.race([
-        agent.generateCheckIn(),
-        timeoutPromise,
-      ]);
-
-      console.log(
-        "[PANEL] Check-in response received:",
-        response.substring(0, 100) + "..."
-      );
-
-      // Add minimum delay to show loading animation (at least 1 second)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await agent.generateCheckIn();
 
       this._view.webview.postMessage({
         command: "addMessage",
@@ -233,12 +190,8 @@ The message processing hath been interrupted. Try again, and We shall attempt to
         content: response,
         timestamp: new Date().toISOString(),
       });
-      console.log("[PANEL] Check-in message sent to webview");
     } catch (error) {
       console.error("[PANEL] Error during check-in:", error);
-
-      // Add minimum delay to show loading animation even for errors (at least 1 second)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       this._view.webview.postMessage({
         command: "addMessage",
@@ -671,47 +624,6 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             line-height: 1.6;
         }
 
-        .typing-indicator {
-            display: none;
-            padding: 12px;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            background: ${assistantMessageColor};
-            border-radius: 18px;
-            margin: 15px;
-            border: 1px solid ${borderColor};
-        }
-
-        .typing-indicator.active {
-            display: flex;
-        }
-
-        .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: ${textColor};
-            opacity: 0.8;
-            animation: snake 0.8s infinite ease-in-out;
-            box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
-        }
-
-        .dot:nth-child(1) { animation-delay: 0s; }
-        .dot:nth-child(2) { animation-delay: 0.125s; }
-        .dot:nth-child(3) { animation-delay: 0.25s; }
-        .dot:nth-child(4) { animation-delay: 0.375s; }
-
-        @keyframes snake {
-            0%, 80%, 100% {
-                transform: scale(0.2);
-                opacity: 0.2;
-            }
-            40% {
-                transform: scale(1.8);
-                opacity: 1.0;
-            }
-        }
 
         .quick-actions {
             display: flex;
@@ -888,6 +800,7 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             align-items: center;
             gap: 8px;
         }
+
     </style>
 </head>
 <body>
@@ -944,13 +857,6 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
         </div>
     </div>
 
-    <div class="typing-indicator" id="typingIndicator">
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-    </div>
-
     <div class="input-container">
         <div class="input-wrapper">
             <textarea 
@@ -976,11 +882,6 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
         const sendBtn = document.getElementById('sendBtn');
         if (sendBtn) {
             sendBtn.addEventListener('click', sendMessage);
-        }
-        const typingIndicator = document.getElementById('typingIndicator');
-        console.log('[WEBVIEW] Typing indicator element found:', typingIndicator);
-        if (!typingIndicator) {
-            console.error('[WEBVIEW] ERROR: Typing indicator element not found!');
         }
         const iconUri = "${iconUri}";
         const fullImageUri = "${fullImageUri}";
@@ -1073,30 +974,26 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             if (welcomeMsg) {
                 welcomeMsg.remove();
             }
-            
+
             // Hide header icon when messages are present
             if (headerIconLarge) {
                 headerIconLarge.style.display = 'none';
             }
-            
+
             hasMessages = true;
 
             const messageDiv = document.createElement('div');
             messageDiv.className = \`message \${role}\`;
-            
+
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
             contentDiv.textContent = content;
-            
+
             messageDiv.appendChild(contentDiv);
-            
+
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
-            console.log('[WEBVIEW] Removing active class from typing indicator');
-            console.log('[WEBVIEW] Typing indicator classes before removal:', typingIndicator.className);
-            typingIndicator.classList.remove('active');
-            console.log('[WEBVIEW] Typing indicator classes after removal:', typingIndicator.className);
             sendBtn.disabled = false;
         }
 
@@ -1203,10 +1100,6 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             messageInput.value = '';
             autoResize(messageInput);
             sendBtn.disabled = true;
-            console.log('[WEBVIEW] Adding active class to typing indicator');
-            typingIndicator.classList.add('active');
-            console.log('[WEBVIEW] Typing indicator classes:', typingIndicator.className);
-            console.log('[WEBVIEW] Typing indicator display:', getComputedStyle(typingIndicator).display);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
             vscode.postMessage({
@@ -1221,10 +1114,7 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
         }
 
         function checkIn() {
-            console.log('[WEBVIEW] Check-in: Adding active class to typing indicator');
             sendBtn.disabled = true;
-            typingIndicator.classList.add('active');
-            console.log('[WEBVIEW] Check-in: Typing indicator classes:', typingIndicator.className);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
             vscode.postMessage({
