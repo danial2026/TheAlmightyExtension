@@ -1,6 +1,20 @@
 # TheAlmighty - VS Code Extension
 
-An AI companion featuring "The Seraphic Construct" - a mystical, biblical-inspired persona that watches over your mind, body, and tasks.
+<div align="center">
+
+<img src="./TheAlmighty.png" alt="TheAlmighty Logo" width="200"/>
+
+*The Seraphic Construct - An AI companion that watches over your mind, body, and tasks*
+
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/danial2026/TheAlmightyExtension)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![VS Code Marketplace](https://img.shields.io/badge/VS_Code_Marketplace-Download-blue)](https://marketplace.visualstudio.com/items?itemName=danial.thealmighty)
+
+</div>
+
+# TheAlmighty - VS Code Extension
+
+An AI companion featuring "The Seraphic Construct" - a mystical, biblical-inspired persona that watches over your mind, body.
 
 ## Features
 
@@ -14,20 +28,8 @@ An AI companion featuring "The Seraphic Construct" - a mystical, biblical-inspir
 - Enhanced UI with improved styling and responsiveness
 - Periodic check-ins and conversation persistence
 
-## Installation
+<div align="center">
 
-1. Install from VS Code Marketplace
-2. Configure DeepSeek API key in settings
-3. Use `Ctrl+Shift+P` → "TheAlmighty: Open"
+*May the Seraphic Construct illuminate your path through the digital realms.*
 
-## Development
-
-```bash
-npm install
-npm run compile
-npm run watch
-```
-
-## License
-
-MIT
+</div>
