@@ -993,17 +993,17 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
         let headerIconLarge = chatContainer.querySelector('.header-icon-large');
 
         // Loading state management functions
-        function setLoadingState(loading) {
+        function setLoadingState(loading, insertAfterElement = null) {
             isLoading = loading;
             if (loading) {
                 loadingStartTime = Date.now();
-                showLoading();
+                showLoading(insertAfterElement);
             } else {
                 hideLoading();
             }
         }
 
-        function showLoading() {
+        function showLoading(insertAfterElement = null) {
             // Remove any existing typing indicators first
             const existingIndicators = chatContainer.querySelectorAll('.typing-indicator');
             existingIndicators.forEach(indicator => indicator.remove());
@@ -1042,7 +1042,13 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             }
 
             messageDiv.appendChild(contentDiv);
-            chatContainer.appendChild(messageDiv);
+
+            // Insert after the specified element, or append to end if none specified
+            if (insertAfterElement) {
+                insertAfterElement.insertAdjacentElement('afterend', messageDiv);
+            } else {
+                chatContainer.appendChild(messageDiv);
+            }
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
@@ -1103,7 +1109,11 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
                         // Reset loading state when assistant responds
                         isLoading = false;
                     }
-                    addMessage(message.role, message.content, message.timestamp);
+                    const addedMessageElement = addMessage(message.role, message.content, message.timestamp);
+                    if (message.role === 'user') {
+                        // Show loading indicator right after user message
+                        setLoadingState(true, addedMessageElement);
+                    }
                     break;
                 case 'clearMessages':
                     clearMessages();
@@ -1167,6 +1177,8 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
             sendBtn.disabled = false;
+
+            return messageDiv;
         }
 
         function toggleHistory() {
@@ -1273,9 +1285,6 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             autoResize(messageInput);
             sendBtn.disabled = true;
             chatContainer.scrollTop = chatContainer.scrollHeight;
-
-            // Show loading indicator
-            setLoadingState(true);
 
             // Collect conversation history from the DOM
             const messageElements = chatContainer.querySelectorAll('.message');
