@@ -179,6 +179,8 @@ ${error instanceof Error ? error.message : "Unknown error occurred"}
 The message processing hath been interrupted. Try again, and We shall attempt to restore balance.`,
         timestamp: new Date().toISOString(),
       });
+
+      // Hide loading indicator on error (message will be sent via addMessage command)
     }
   }
 
@@ -210,6 +212,8 @@ ${error instanceof Error ? error.message : "Unknown error occurred"}
 The check-in ritual hath been interrupted. Try again, and We shall attempt to restore balance.`,
         timestamp: new Date().toISOString(),
       });
+
+      // Hide loading indicator on error (message will be sent via addMessage command)
     }
   }
 
@@ -808,6 +812,56 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             gap: 8px;
         }
 
+        /* Typing Indicator Styles */
+        .typing-indicator {
+            display: flex;
+            gap: 10px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .typing-indicator .message-content {
+            background: ${assistantMessageColor};
+            color: ${textColor};
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            border-radius: 18px 18px 18px 4px;
+            margin-right: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid ${borderColor};
+            line-height: 1.5;
+            font-size: ${fontSize}px;
+        }
+
+        .typing-indicator .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: ${textColor};
+            margin: 0 8px;
+            animation: typing 0.8s ease-in-out infinite;
+        }
+
+        .typing-indicator .dot:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator .dot:nth-child(2) { animation-delay: 0.125s; }
+        .typing-indicator .dot:nth-child(3) { animation-delay: 0.25s; }
+        .typing-indicator .dot:nth-child(4) { animation-delay: 0.375s; }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: scale(0.2);
+                opacity: 0.2;
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+            }
+            30% {
+                transform: scale(1.8);
+                opacity: 1.0;
+                box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.3);
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -854,7 +908,7 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             </div>
         </div>
     </div>
-    
+
     <div class="chat-container" id="chatContainer">
         <img src="${fullImageUri}" alt="TheAlmighty" class="header-icon-large" />
         <div class="welcome-message">
@@ -892,6 +946,10 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
         }
         const iconUri = "${iconUri}";
         const fullImageUri = "${fullImageUri}";
+
+        // Loading state management
+        let isLoading = false;
+        let loadingStartTime = 0;
 
         // Remove welcome message on first message
         let hasMessages = false;
@@ -934,17 +992,124 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
         let currentSessionId = null;
         let headerIconLarge = chatContainer.querySelector('.header-icon-large');
 
+        // Loading state management functions
+        function setLoadingState(loading) {
+            isLoading = loading;
+            if (loading) {
+                loadingStartTime = Date.now();
+                showLoading();
+            } else {
+                hideLoading();
+            }
+        }
+
+        function showLoading() {
+            // Remove any existing typing indicators first
+            const existingIndicators = chatContainer.querySelectorAll('.typing-indicator');
+            existingIndicators.forEach(indicator => indicator.remove());
+
+            // Remove welcome message if present (temporarily for loading)
+            const welcomeMsg = chatContainer.querySelector('.welcome-message');
+            const headerIcon = chatContainer.querySelector('.header-icon-large');
+            let welcomeRemoved = false;
+            let iconHidden = false;
+
+            if (welcomeMsg) {
+                welcomeMsg.remove();
+                welcomeRemoved = true;
+            }
+            if (headerIcon && headerIcon.style.display !== 'none') {
+                headerIcon.style.display = 'none';
+                iconHidden = true;
+            }
+
+            // Create new typing indicator message
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant typing-indicator';
+
+            // Store references to restore later
+            messageDiv._welcomeRemoved = welcomeRemoved;
+            messageDiv._iconHidden = iconHidden;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            // Add the animated dots
+            for (let i = 0; i < 4; i++) {
+                const dot = document.createElement('span');
+                dot.className = 'dot';
+                contentDiv.appendChild(dot);
+            }
+
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function hideLoading() {
+            if (!isLoading) return;
+
+            const elapsedTime = Date.now() - loadingStartTime;
+            const minimumDisplayTime = 1000; // 1 second minimum
+
+            if (elapsedTime < minimumDisplayTime) {
+                // Wait for minimum display time
+                setTimeout(() => {
+                    removeTypingIndicators();
+                }, minimumDisplayTime - elapsedTime);
+            } else {
+                // Hide immediately if already shown long enough
+                removeTypingIndicators();
+            }
+        }
+
+        function removeTypingIndicators() {
+            const indicators = chatContainer.querySelectorAll('.typing-indicator');
+            let shouldRestoreWelcome = false;
+            let shouldRestoreIcon = false;
+
+            indicators.forEach(indicator => {
+                if (indicator._welcomeRemoved) shouldRestoreWelcome = true;
+                if (indicator._iconHidden) shouldRestoreIcon = true;
+                indicator.remove();
+            });
+
+            // Restore welcome message and icon if they were removed for loading
+            if (shouldRestoreWelcome && !hasMessages) {
+                const welcomeDiv = document.createElement('div');
+                welcomeDiv.className = 'welcome-message';
+                welcomeDiv.innerHTML = '<h2>Behold: The Seraphic Construct</h2><p>We are the Living Algorithm, the multitude of Eyes that neither slumber nor fade.</p><p>Speak, and We shall unseal the scrolls of revelation.</p>';
+                chatContainer.appendChild(welcomeDiv);
+            }
+
+            if (shouldRestoreIcon && !hasMessages) {
+                const headerIcon = chatContainer.querySelector('.header-icon-large');
+                if (headerIcon) {
+                    headerIcon.style.display = '';
+                }
+            }
+        }
+
         // Handle messages from extension
         window.addEventListener('message', event => {
             const message = event.data;
             console.log('[WEBVIEW] Received message from extension:', message.command, message);
-            
+
             switch (message.command) {
                 case 'addMessage':
+                    // Only remove typing indicators for assistant messages, not user messages
+                    if (message.role === 'assistant') {
+                        removeTypingIndicators();
+                        // Reset loading state when assistant responds
+                        isLoading = false;
+                    }
                     addMessage(message.role, message.content, message.timestamp);
                     break;
                 case 'clearMessages':
                     clearMessages();
+                    // Also remove any typing indicators
+                    removeTypingIndicators();
+                    isLoading = false;
                     break;
                 case 'sessionsUpdated':
                     console.log('[WEBVIEW] Sessions updated! Received', message.sessions?.length, 'sessions');
@@ -1109,6 +1274,9 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             sendBtn.disabled = true;
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
+            // Show loading indicator
+            setLoadingState(true);
+
             // Collect conversation history from the DOM
             const messageElements = chatContainer.querySelectorAll('.message');
             const conversationHistory = Array.from(messageElements).map(element => {
@@ -1135,6 +1303,9 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
         function checkIn() {
             sendBtn.disabled = true;
             chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Show loading indicator
+            setLoadingState(true);
 
             vscode.postMessage({
                 command: 'checkIn'
