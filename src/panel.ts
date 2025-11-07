@@ -93,7 +93,7 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
             this._handleGetSessions();
             break;
           case "sendMessage":
-            await this._handleMessage(message.text);
+            await this._handleMessage(message.text, message.history);
             break;
           case "checkIn":
             await this._handleCheckIn();
@@ -131,7 +131,10 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     this._disposables.push(messageHandler);
   }
 
-  private async _handleMessage(userMessage: string) {
+  private async _handleMessage(
+    userMessage: string,
+    history?: Array<{ role: string; content: string }>
+  ) {
     if (!userMessage.trim() || !this._view) {
       return;
     }
@@ -147,7 +150,11 @@ class TheAlmightyPanelProvider implements vscode.WebviewViewProvider {
     try {
       // Get response from agent
       const agent = TheAlmightyAgent.getInstance();
-      const response = await agent.processMessage(userMessage);
+      const response = await agent.processMessage(
+        userMessage,
+        undefined,
+        history
+      );
 
       // Add response to UI
       this._view.webview.postMessage({
@@ -1102,9 +1109,21 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             sendBtn.disabled = true;
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
+            // Collect conversation history from the DOM
+            const messageElements = chatContainer.querySelectorAll('.message');
+            const conversationHistory = Array.from(messageElements).map(element => {
+                const role = element.classList.contains('user') ? 'user' : 'assistant';
+                const content = element.querySelector('.message-content')?.textContent || '';
+                return {
+                    role: role,
+                    content: content
+                };
+            });
+
             vscode.postMessage({
                 command: 'sendMessage',
-                text: message
+                text: message,
+                history: conversationHistory
             });
         }
 

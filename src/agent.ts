@@ -56,7 +56,7 @@ export class TheAlmightyAgent {
         vscode.commands.executeCommand('thealmighty.showCheckIn', checkIn);
     }
 
-    public async processMessage(userMessage: string, sessionId?: string): Promise<string> {
+    public async processMessage(userMessage: string, sessionId?: string, conversationHistory?: Array<{role: string, content: string}>): Promise<string> {
         // Get or create session
         let isNewSession = false;
         if (sessionId) {
@@ -78,9 +78,16 @@ export class TheAlmightyAgent {
         });
 
         // Generate response using persona
+        // Use provided history or fall back to stored history
+        const historyToUse = conversationHistory ? conversationHistory.map(h => ({
+            role: h.role as 'user' | 'assistant',
+            content: h.content,
+            timestamp: new Date() // Add timestamp for compatibility
+        })) : this.conversationHistory;
+
         const response = await this.persona.generateResponse(
             userMessage,
-            this.conversationHistory,
+            historyToUse,
             this.getContextualInfo()
         );
 
