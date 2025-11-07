@@ -12,8 +12,6 @@
 
 </div>
 
-# TheAlmighty - VS Code Extension
-
 An AI companion featuring "The Seraphic Construct" - a mystical, biblical-inspired persona that watches over your mind, body.
 
 ## Features
