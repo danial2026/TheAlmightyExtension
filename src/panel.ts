@@ -815,7 +815,7 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
         /* Typing Indicator Styles */
         .typing-indicator {
             display: flex;
-            gap: 10px;
+            gap: 6px;
             animation: fadeIn 0.3s ease-in;
         }
 
@@ -829,18 +829,18 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 12px;
+            padding: 8px 12px;
             border: 1px solid ${borderColor};
             line-height: 1.5;
             font-size: ${fontSize}px;
         }
 
         .typing-indicator .dot {
-            width: 12px;
-            height: 12px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: ${textColor};
-            margin: 0 8px;
+            margin: 24px 4px;
             animation: typing 0.8s ease-in-out infinite;
         }
 
@@ -851,14 +851,12 @@ The check-in ritual hath been interrupted. Try again, and We shall attempt to re
 
         @keyframes typing {
             0%, 60%, 100% {
-                transform: scale(0.2);
-                opacity: 0.2;
-                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+                transform: scale(0.5);
+                opacity: 0.4;
             }
             30% {
-                transform: scale(1.8);
+                transform: scale(1.2);
                 opacity: 1.0;
-                box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.3);
             }
         }
 
