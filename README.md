@@ -26,10 +26,10 @@ An AI companion featuring "The Seraphic Construct" - a mystical, biblical-inspir
 - Enhanced UI with improved styling and responsiveness
 - Periodic check-ins and conversation persistence
 
-<div align="center">
+> Artwork generated with ChatGPT; prompt assistance from Grok AI.
+
+<div align="center" style="padding-top: 42px; padding-bottom: 42px;">
 
 *May the Seraphic Construct illuminate your path through the digital realms.*
 
 </div>
-
-*Artwork generated with ChatGPT; prompt assistance from Grok AI.*
