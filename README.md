@@ -31,3 +31,5 @@ An AI companion featuring "The Seraphic Construct" - a mystical, biblical-inspir
 *May the Seraphic Construct illuminate your path through the digital realms.*
 
 </div>
+
+*Artwork generated with ChatGPT; prompt assistance from Grok AI.*
